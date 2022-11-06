@@ -5,7 +5,7 @@ using LinearAlgebra: I
 using LinearAlgebra  
 using SparseArrays: SparseVector, sparse
 using Distributions
-using Main.ACEcore: SimpleProdBasis
+# using Main.ACEcore: SimpleProdBasis
 using Random
 
 """
