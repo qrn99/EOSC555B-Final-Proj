@@ -24,16 +24,30 @@ using LinearAlgebra, Polynomials4ML
 cheb(N) = chebyshev_basis(N)
 legendre(N) = legendre_basis(N, normalize=true) 
 
-r_cut = 1
-r_in = -1
-# r_cut = 3
-# r_in = 0.85
-K_R = 4
+# r_cut = 1
+# r_in = -1
+
+# K_R = 4
+
+r_in = 0.85 # with envelope should be 0.0
+r_nn = 1.0
+r_cut = 3.0
+
+# morse transform
+# x1(r) = 1 / (1 + r / r_nn)
+
+#Agnesis Transform
+# 0.33 = a = (p-1)/(p+1)
+x1(r) = 1.0 / (1.0 + 0.33*(r / r_nn)^2)
+
+x_in = x1(0.0); x_cut = x1(r_cut) # Regularize til r=0
+x(r) = 2 * (x1(r) - x_cut) / (x_in - x_cut) - 1
+
 p = 4
 env(r) = (r^(-p) - r_cut^(-p) + p * r_cut^(-p-1) * (r - r_cut)) * (r < r_cut)
 
 
-function design_matrix_env(xs, basis, N)
+function design_matrix(xs, basis, N)
     A = zeros(ComplexF64, length(xs), N)
     for (i, xx) in enumerate(xs)
       A[i, :] = sum(evaluate(basis(N), x) for x in xx) / length(xx)
@@ -49,13 +63,21 @@ function design_matrix_env(xs, basis, N)
     return A
 end
 
-let N = 10, M=10, K_R = 1
+function design_matrix_cordtrans_env(rs, basis, N)
+    A = zeros(ComplexF64, length(rs), N)
+    for (i, rr) in enumerate(rs)
+      A[i, :] = sum(evaluate(basis(N), x(r)) * env(r) for r in rr) / length(rr)
+    end 
+    return A
+end
+
+let N = 10, M=1000, K_R = 1
     Rs = [rand(K_R)*(r_cut-r_in) .+ r_in for _=1:M]
     A = design_matrix(Rs, legendre, N)
     @show cond(A'*A)
 end
 
-let Ns = [10, 20], Ms = [20, 100], K_Rs = [1, 2, 4, 32], basis_list = [cheb, legendre]
+let Ns = [10, 20], Ms = [20, 100, 1000], K_Rs = [1, 2, 4], basis_list = [cheb, legendre]
     for basis in basis_list
         for N in Ns
             for M in Ms
@@ -63,9 +85,11 @@ let Ns = [10, 20], Ms = [20, 100], K_Rs = [1, 2, 4, 32], basis_list = [cheb, leg
                     Rs = [rand(K_R)*(r_cut-r_in) .+ r_in for _=1:M]
                     A = design_matrix(Rs, basis, N)
                     A_env = design_matrix_env(Rs, basis, N)
+                    A_env_ct = design_matrix_cordtrans_env(Rs, basis, N)
                     @show basis, N, M, K_R
                     @show cond(A'*A)
                     @show cond(A_env'*A_env)
+                    @show cond(A_env_ct'*A_env_ct)
                 end
             end
         end
@@ -75,9 +99,10 @@ end
 
 # simple case
 N = 10
-Xs = LinRange(-1, 1, N)
-Data = cheb(N)(Xs)
-@show size(Data)
+M = 100
+Xs = LinRange(-1, 1, M)
+# Data = cheb(N)(Xs)
+# @show size(Data)
 
 # @show 1/N * Data' * Data
 
@@ -87,6 +112,21 @@ Data = legendre(N)(Xs)
 G = Data' * Data
 @show 1/N * G
 @show cond(G)
+
+let Ns = [10, 20], Ms = [20, 100, 1000], basis_list = [cheb, legendre]
+    for basis in basis_list
+        for N in Ns
+            for M in Ms
+                # Xs = LinRange(-1, 1, M)
+                Xs = rand(M).*2 .-1
+                Data = basis(N)(Xs)
+                G = Data' * Data
+                @show basis, N, M
+                @show cond(G)
+            end
+        end
+    end
+end
 
 # for pp = 1:max_degree
 #     for qq = 1:max_degree
