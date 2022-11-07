@@ -77,6 +77,7 @@ let N = 10, M=1000, K_R = 1
     @show cond(A'*A)
 end
 
+# averaged 2B
 let Ns = [10, 20], Ms = [20, 100, 1000], K_Rs = [1, 2, 4], basis_list = [cheb, legendre]
     for basis in basis_list
         for N in Ns
@@ -86,7 +87,9 @@ let Ns = [10, 20], Ms = [20, 100, 1000], K_Rs = [1, 2, 4], basis_list = [cheb, l
                     A = design_matrix(Rs, basis, N)
                     A_env = design_matrix_env(Rs, basis, N)
                     A_env_ct = design_matrix_cordtrans_env(Rs, basis, N)
+                    G_norm = norm(M^(3/2) * A, 1)
                     @show basis, N, M, K_R
+                    @show G_norm
                     @show cond(A'*A)
                     @show cond(A_env'*A_env)
                     @show cond(A_env_ct'*A_env_ct)
@@ -97,7 +100,7 @@ let Ns = [10, 20], Ms = [20, 100, 1000], K_Rs = [1, 2, 4], basis_list = [cheb, l
 end
 
 
-# simple case
+# simple 2B
 N = 10
 M = 100
 Xs = LinRange(-1, 1, M)
@@ -128,25 +131,29 @@ let Ns = [10, 20], Ms = [20, 100, 1000], basis_list = [cheb, legendre]
     end
 end
 
-# for pp = 1:max_degree
-#     for qq = 1:max_degree
-#         int = dot(Data[:, pp], Data[:, qq]) / N
-#         @show int
-#         if abs(int) > 1e-7
-#             @show pp, qq
-#         end
-#     end
-# end
 
-# function simpson(f, a, b, N)
-#     h = (b-a)/N 
-#     q = 0.0 
-#     for n = 0:N-1
-#         x0 = a + h*n 
-#         x1 = x0 + h/2 
-#         x2 = x0 + h 
-#         q += (h/6) * (f(x0) + 4 * f(x1) + f(x2))
-#     end
-#     return q 
-# end
+# simple 3B
+X1 = LinRange(-1, 1, N)
+X2 = LinRange(-1, 1, N)
+NN = get_NN(max_degree)
+
+
+function des_matrix_3b(X1, X2, poly, NN2)
+    D1 = poly(X1)
+    D2 = poly(X2)
+
+    B = length(NN2)
+    A = zeros((length(X1), B))
+    for b=1:B
+        n, m = NN2[b]
+        A[:, b] = D1[:, n] .* D2[:, m] + D1[:, m] .* D2[:, n]
+    end
+
+    return A
+end
+
+A = des_matrix_3b(X1, X2, poly, NN[max_degree + 1:end])
+M = 1/N * A
+@show norm(A, 1)
+@show 1/sqrt(N) * norm(M, 1)
 
