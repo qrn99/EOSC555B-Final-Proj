@@ -1,3 +1,4 @@
+include("../src/utils.jl")
 using LinearAlgebra, Polynomials4ML
 # function legendre(x::Number, N)
 #     L = zeros(N+1)
@@ -87,7 +88,7 @@ let Ns = [10, 20], Ms = [20, 100, 1000], K_Rs = [1, 2, 4], basis_list = [cheb, l
                     A = design_matrix(Rs, basis, N)
                     A_env = design_matrix_env(Rs, basis, N)
                     A_env_ct = design_matrix_cordtrans_env(Rs, basis, N)
-                    G_norm = (M*norm( A, 1))^2
+                    G_norm = (M*norm(A, 2))^2
                     @show basis, N, M, K_R
                     @show G_norm
                     @show cond(A'*A)
@@ -101,18 +102,18 @@ end
 
 # For the A^TA LSQ stability of averaged energy design matrix A  
 # Check unknown prodcut term behaviour as M → ∞
-let Ns = [20], Ms = [20, 100, 1000], K_Rs = [1, 2, 4], basis_list = [cheb, legendre]
+let Ns = [20], Ms = [20, 100, 1000], K_Rs = [1, 2, 4], basis_list = [legendre]
     r_cut = 1
     r_in = -1
     for basis in basis_list
         for N in Ns
-            for M in Ms
-                for K_R in K_Rs
+            for K_R in K_Rs
+                for M in Ms
                     Rs = [rand(K_R)*2 .- 1 for _=1:M]
                     sum1 = 0
                     sum2 = 0
-                    n = 2
-                    n2 = 9
+                    n = 1
+                    n2 = 1
                     for (i, rr) in enumerate(Rs)
                         for k=eachindex(rr)
                             for k2=eachindex(rr)
@@ -127,7 +128,9 @@ let Ns = [20], Ms = [20, 100, 1000], K_Rs = [1, 2, 4], basis_list = [cheb, legen
                     end
                     @show (M, N, K_R, (n, n2))
                     @show sum1
+                    # @show sum1/(K_R^2)
                     @show sum2
+                    # @show sum2/(K_R^2)
                 end
             end
         end
@@ -168,6 +171,7 @@ end
 
 # simple 3B
 N = 1000 #num of samples
+max_degree = 15
 X1 = LinRange(-1, 1, N)
 X2 = LinRange(-1, 1, N)
 NN = get_NN(max_degree)
@@ -186,6 +190,7 @@ function G_innerProd_3b(X1, X2, poly, NN2)
     return G
 end
 
+poly = legendre_basis(max_degree, normalize = true)
 G = G_innerProd_3b(X1, X2, poly, NN[max_degree + 1:end])
-@show "||| M ||| ",  sqrt(1/N * norm(G, 1))
+@show "||| M ||| ",  sqrt(1/N * norm(G, 2))
 
