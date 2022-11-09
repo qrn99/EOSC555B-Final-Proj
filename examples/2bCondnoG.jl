@@ -1,3 +1,4 @@
+include("../src/utils.jl")
 using LinearAlgebra, Polynomials4ML
 # function legendre(x::Number, N)
 #     L = zeros(N+1)
@@ -77,6 +78,7 @@ let N = 10, M=1000, K_R = 1
     @show cond(A'*A)
 end
 
+# averaged 2B
 let Ns = [10, 20], Ms = [20, 100, 1000], K_Rs = [1, 2, 4], basis_list = [cheb, legendre]
     for basis in basis_list
         for N in Ns
@@ -86,7 +88,9 @@ let Ns = [10, 20], Ms = [20, 100, 1000], K_Rs = [1, 2, 4], basis_list = [cheb, l
                     A = design_matrix(Rs, basis, N)
                     A_env = design_matrix_env(Rs, basis, N)
                     A_env_ct = design_matrix_cordtrans_env(Rs, basis, N)
+                    G_norm = (M*norm(A, 2))^2
                     @show basis, N, M, K_R
+                    @show G_norm
                     @show cond(A'*A)
                     @show cond(A_env'*A_env)
                     @show cond(A_env_ct'*A_env_ct)
@@ -96,8 +100,44 @@ let Ns = [10, 20], Ms = [20, 100, 1000], K_Rs = [1, 2, 4], basis_list = [cheb, l
     end
 end
 
+# For the A^TA LSQ stability of averaged energy design matrix A  
+# Check unknown prodcut term behaviour as M → ∞
+let Ns = [20], Ms = [20, 100, 1000], K_Rs = [1, 2, 4], basis_list = [legendre]
+    r_cut = 1
+    r_in = -1
+    for basis in basis_list
+        for N in Ns
+            for K_R in K_Rs
+                for M in Ms
+                    Rs = [rand(K_R)*2 .- 1 for _=1:M]
+                    sum1 = 0
+                    sum2 = 0
+                    n = 1
+                    n2 = 1
+                    for (i, rr) in enumerate(Rs)
+                        for k=eachindex(rr)
+                            for k2=eachindex(rr)
+                                if k == k2
+                                    # @show evaluate(cheb(N), rr[k])
+                                    sum1 += evaluate(cheb(N), rr[k])[n] * evaluate(cheb(N), rr[k'])[n2]
+                                else
+                                    sum2 += evaluate(cheb(N), rr[k])[n] * evaluate(cheb(N), rr[k'])[n2]
+                                end
+                            end
+                        end
+                    end
+                    @show (M, N, K_R, (n, n2))
+                    @show sum1
+                    # @show sum1/(K_R^2)
+                    @show sum2
+                    # @show sum2/(K_R^2)
+                end
+            end
+        end
+    end
+end
 
-# simple case
+# simple 2B
 N = 10
 M = 100
 Xs = LinRange(-1, 1, M)
@@ -128,25 +168,29 @@ let Ns = [10, 20], Ms = [20, 100, 1000], basis_list = [cheb, legendre]
     end
 end
 
-# for pp = 1:max_degree
-#     for qq = 1:max_degree
-#         int = dot(Data[:, pp], Data[:, qq]) / N
-#         @show int
-#         if abs(int) > 1e-7
-#             @show pp, qq
-#         end
-#     end
-# end
 
-# function simpson(f, a, b, N)
-#     h = (b-a)/N 
-#     q = 0.0 
-#     for n = 0:N-1
-#         x0 = a + h*n 
-#         x1 = x0 + h/2 
-#         x2 = x0 + h 
-#         q += (h/6) * (f(x0) + 4 * f(x1) + f(x2))
-#     end
-#     return q 
-# end
+# simple 3B
+N = 1000 #num of samples
+max_degree = 15
+X1 = LinRange(-1, 1, N)
+X2 = LinRange(-1, 1, N)
+NN = get_NN(max_degree)
+
+function G_innerProd_3b(X1, X2, poly, NN2)
+    D1 = poly(X1)
+    D2 = poly(X2)
+
+    B = length(NN2)
+    G = zeros((length(X1), B))
+    for b=1:B
+        n, m = NN2[b]
+        G[:, b] = D1[:, n] .* D2[:, m] + D1[:, m] .* D2[:, n]
+    end
+
+    return G
+end
+
+poly = legendre_basis(max_degree, normalize = true)
+G = G_innerProd_3b(X1, X2, poly, NN[max_degree + 1:end])
+@show "||| M ||| ",  sqrt(1/N * norm(G, 2))
 
