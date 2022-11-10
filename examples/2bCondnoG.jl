@@ -254,3 +254,4 @@ G = G_innerProd_3b(X1, X2, poly, NN[max_degree + 1:end])
 @show "||| M ||| ",  sqrt(1/N * norm(G, 2))
 
 ##
+

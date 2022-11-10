@@ -4,7 +4,7 @@ using Distributions
 using Plots
 
 max_degree = 15
-N = 10000
+N = 1000000
 
 # 2 body case
 legendre(N) = legendre_basis(N, normalize=true) 
