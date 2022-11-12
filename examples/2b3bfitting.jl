@@ -8,20 +8,20 @@ end
 
 # -------------------------------------------------------testing configs------------------------------------------#
 Random.seed!(1255534)
-max_degree = 15
-exp_dir = "results/test_result_3b_Rastrigin_dnumsam_samedegree/"
+max_degree = 15 # max_degree of polynomial
+exp_dir = "results/test_result_3b_Rastrigin_dnumsam_samedegree/" # result saving dir
 mkpath(exp_dir)
 distribution = Uniform # determinated by type of basis used
-solver = "qr"
-num_sam_list = [300, 400, 500, 600, 700]
-num_test = 2000
+solver = "qr" # solver, currently support qr and ARD
+num_sam_list = [10000] # number of data used in training
+num_test = 2000 # number of data used in test, will be drawn from the same distribution as training
 aa = num_sam_list[1]
 bb = num_sam_list[end]
 ord = 1 # ord = body - 1
-K_R = 4
-poly = legendre_basis(max_degree, normalize = true)
-Testing_func = Rastrigin
-plotting = true
+K_R = 5 # number of election within a neighbourhood
+poly = legendre_basis(max_degree, normalize = true) # polynomial basis used
+Testing_func = Rastrigin # testing function for evaluating basis
+plotting = true # decide to save result or not
 
 # -------------------------------------------------------basic constructions------------------------------------------#
 NN = get_NN(max_degree, ord)
@@ -111,7 +111,7 @@ for num_sam in num_sam_list
        pure_err_curr += norm(zs_pure - ground_zs)/norm(ground_zs)
  
        cond_num_2b_pure_curr += cond(A_pure[:, 1:max_degree])
-       @show cond_num_2b_pure
+       @show cond_num_2b_pure_curr
        if length(NN3b) > 0
            cond_num_3b_pure_curr += cond(A_pure[:, length(NN2b) + 1: end])
        end
