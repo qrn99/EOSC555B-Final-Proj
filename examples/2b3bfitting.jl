@@ -13,7 +13,7 @@ exp_dir = "results/test_result_3b_Rastrigin_dnumsam_samedegree/" # result saving
 mkpath(exp_dir)
 distribution = Uniform # determinated by type of basis used
 solver = "qr" # solver, currently support qr and ARD
-num_sam_list = [10000] # number of data used in training
+num_sam_list = 10 .^(5:5) # number of data used in training
 num_test = 2000 # number of data used in test, will be drawn from the same distribution as training
 aa = num_sam_list[1]
 bb = num_sam_list[end]
@@ -125,13 +125,13 @@ end
 # -------------------------------------------------------result saving------------------------------------------#
 
 if plotting == true
-    p1 = plot(num_sam_list, pure_err, label = "pure", xlabel = "num sam", ylabel = "rel err", yscale = :log10)
+    p1 = plot(num_sam_list, pure_err, xscale=:log10, label = "pure", xlabel = "num sam", ylabel = "rel err", yscale = :log10)
     savefig(p1, exp_dir*"/checkerror_numsam=[" * string(aa) * "," * string(bb) * "]" * "_maxdeg=[" * string(max_degree) * "]")
 
-    p2 = plot(num_sam_list, cond_num_2b_pure, label = "2b", xlabel = "num sam", ylabel = "Coniditional number")
+    p2 = plot(num_sam_list, cond_num_2b_pure, xscale=:log10, label = "2b", xlabel = "num sam", ylabel = "Coniditional number")
     savefig(p2, exp_dir*"/checkcond_2b_numsam=[" * string(aa) * "," * string(bb) * "]" * "_maxdeg=[" * string(max_degree) * "]")
 
-    p4 = plot(num_sam_list, cond_num_3b_pure, label = "3b", xlabel = "num sam", ylabel = "Coniditional number")
+    p4 = plot(num_sam_list, cond_num_3b_pure, xscale=:log10, label = "3b", xlabel = "num sam", ylabel = "Coniditional number")
     savefig(p4, exp_dir*"/checkcond_3b_numsam=[" * string(aa) * "," * string(bb) * "]" * "_maxdeg=[" * string(max_degree) * "]")
 
     CSV.write(exp_dir*"/err_numsam=[" * string(aa) * "," * string(bb) * "]" * "_maxdeg=[" * string(max_degree) * "]" * ".csv", (pure_err = pure_err)) 
