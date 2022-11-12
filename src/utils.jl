@@ -12,15 +12,31 @@ using Random
 This function is for getting all the permutations which we used to calculate the coefficients, currently only for 2b baiss
    param: maxdeg :: Int, max degree
 """
-function get_NN(maxdeg)
+function get_NN(maxdeg, correlation_order)
    index_pairs = Vector{Int64}[[i] for i = 1:maxdeg]
-   for i = 1:maxdeg
-      for j = i:maxdeg
-         if (i + j) <= maxdeg
-            push!(index_pairs, [i ,j])
+   #lag = 0
+   if correlation_order >= 2
+      for i = 1:maxdeg
+         for j = i:maxdeg
+            if (i + j) <= maxdeg
+               push!(index_pairs, [i ,j])
+            end
          end
       end
    end
+
+   if correlation_order >= 3
+      for i = 1:maxdeg
+         for j = i:maxdeg
+            for k = j: maxdeg
+               if (i + j + k) <= maxdeg
+                  push!(index_pairs, [i ,j, k])
+               end
+            end
+         end
+      end
+   end
+
    return index_pairs
 end
 
@@ -95,4 +111,5 @@ function P_kappa_prod_coeffs(poly, NN, tol = 1e-10)
    end
    return Pnn
 end
+
 
