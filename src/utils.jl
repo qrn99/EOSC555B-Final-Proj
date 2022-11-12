@@ -7,6 +7,8 @@ using SparseArrays: SparseVector, sparse
 using Distributions
 # using Main.ACEcore: SimpleProdBasis
 using Random
+using Plots
+using CSV
 
 """
 This function is for getting all the permutations which we used to calculate the coefficients, currently only for 2b baiss
@@ -50,7 +52,7 @@ param: NN2: a list of list with length = 2, sbould be of length = number of basi
 param: poly: type of polynomial basis to be used
 return: G
 """
-function getG(X1, X2, poly, NN2)
+function getIntegralG(X1, X2, poly, NN2)
    B = length(NN2) # number of basis
    D1 = poly(X1)
    D2 = poly(X2)
@@ -112,4 +114,18 @@ function P_kappa_prod_coeffs(poly, NN, tol = 1e-10)
    return Pnn
 end
 
+"""
+This function implements the method of getting the P_kappa coeffs for evaluation of pure PI basis, current implementation for 2b PI basis only
 
+param: pibasis :: 1d_pi_basis, target pibasis to be purified
+return: P_kappa_coeffs:: Dict{Vector{Int}, SparseVector{Float64, Int64}}(), result of fitting the pibasis for different tuples from get_NN(pibasis)
+"""
+function rand_radial(poly, N)
+   if typeof(poly) == typeof(legendre_basis)
+      return rand(Uniform(-1, 1), N)
+   elseif  typeof(poly) == typeof(chebyshev_basis)
+      return "to be implementated"
+   else
+      println("Implementation Not found")
+   end
+end
