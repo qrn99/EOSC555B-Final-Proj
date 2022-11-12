@@ -103,7 +103,6 @@ let Ns = [20], Ms = [20, 100, 1000], K_Rs = [1, 2, 4], basis_list = [legendre]
                                 for k=eachindex(rr)
                                     for k2=eachindex(rr)
                                         if k == k2
-                                            # @show evaluate(cheb(N), rr[k])
                                             sum1 += evaluate(cheb(N), rr[k])[n] * evaluate(cheb(N), rr[k'])[n2]
                                         else
                                             sum2 += evaluate(cheb(N), rr[k])[n] * evaluate(cheb(N), rr[k'])[n2]
@@ -160,31 +159,67 @@ end
 # end
 # A2 = des_mat2(Rs, legendre, N, K_R)
 
-function design_matrix_no_scale(xs, basis, N)
-    A = zeros(ComplexF64, length(xs), N)
-    for (i, xx) in enumerate(xs)
-      A[i, :] = sum(evaluate(basis(N), x) for x in xx)/ length(xx)
+function design_matrix_col(Rs, basis, M, N, K_R)
+    A = zeros(M, N)
+    poly = basis(N)
+    Poly_Rs = [poly(Rs[:, k]) for k=1:K_R]
+    for i=1:N
+        A[:, i] = sum([PR[:, i] for PR in Poly_Rs])/K_R
     end
+    return A, Poly_Rs
+end
+
+function design_matrix_row(xs, basis, N)
+    A = zeros(length(xs), N)
+    poly = basis(N)
+    for (i, xx) in enumerate(xs)
+      A[i, :] = sum(poly(x) for x in xx)/length(xx)
+    end 
     return A
 end
 
-N = 10
+function getSumDiffkProd(AtA, Poly_Rs, M, N)
+    sum1 = zeros(N, N)
+    sum2 = AtA
+    for n=1:N
+        for n2=1:N
+            sum_k = zeros(M)
+            for PX in Poly_Rs
+                sum_k += PX[:, n] .* PX[:, n2]
+            end
+            sum_same_k_entry = sum(sum_k)
+            sum1[n, n2] = sum_same_k_entry
+            sum2[n, n2] -= sum_same_k_entry
+        end
+    end
+    return sum1, sum2
+end
+
+N = 20
 M = 100
 K_R = 2
-Rs = [rand(K_R)*2 .- 1 for _=1:M]
-sum1, sum2 = getSumDiffProduct(Rs, legendre, N, K_R)
-A = real(design_matrix(Rs, legendre, N))
-# A2 = des_mat2(Rs, legendre, N, K_R)
-# A'*A .== A2
-A'*A
-A'*A .== sum1+sum2
-@assert(A'*A == sum1+sum2)
-A'*A
-sum1+sum2
-@show (sum1+sum2)
-heatmap(sum1 , aspect_ratio=1)
-heatmap(sum2, aspect_ratio=1)
-heatmap(A'*A, aspect_ratio=1)
+basis = legendre
+
+Rs2 = [rand(K_R)*2 .- 1 for _=1:M]
+Rs = reduce(hcat, Rs2)'
+A, Poly_Rs = design_matrix_col(Rs, basis, M, N, K_R)
+
+# sum1, sum2 = getSumDiffProduct(Rs, legendre, N, K_R)
+
+# Rs2 = [rand(K_R)*2 .- 1 for _=1:M]
+A_row = design_matrix_row(Rs2, legendre, N)
+@show norm(A-A_row)
+@assert(norm(A-A_row) < 1e-13)
+
+AtA = A'*A
+sum1, sum2 = getSumDiffkProd(AtA, Poly_Rs, M, N)
+sum1 + sum2 .== AtA
+norm(AtA - (sum1+sum2))
+@assert(norm(AtA - (sum1+sum2)) < 1e-14)
+
+heatmap(sum1, aspect_ratio=1, title="sum over same k, N = $N, M=$M, K_R=$K_R")
+heatmap(sum2, aspect_ratio=1, title="sum over different k, N = $N, M=$M, K_R=$K_R")
+heatmap(A'*A, aspect_ratio=1, title="A^T*A")
 ##
 
 
