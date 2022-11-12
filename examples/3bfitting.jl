@@ -31,6 +31,7 @@ pure_err = []
 cond_num_2b_pure = []
 cond_num_3b_pure = []
 
+# -------------------------------------------------------testing loop------------------------------------------#
 for num_sam in num_sam_list
     pure_err_curr = 0
     cond_num_2b_pure_curr = 0
@@ -112,7 +113,9 @@ for num_sam in num_sam_list
     push!(pure_err, pure_err_curr / 10)
     push!(cond_num_2b_pure, cond_num_2b_pure_curr / 10) 
     push!(cond_num_3b_pure, cond_num_3b_pure_curr/ 10)
- end
+end
+
+# -------------------------------------------------------result saving------------------------------------------#
 
 p1 = plot(num_sam_list, pure_err, label = "pure", xlabel = "num sam", ylabel = "rel err", yscale = :log10)
 savefig(p1, exp_dir*"/checkerror_numsam=[" * string(aa) * "," * string(bb) * "]" * "_maxdeg=[" * string(max_degree) * "]")
