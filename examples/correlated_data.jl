@@ -2,7 +2,7 @@ include("../src/utils.jl")
 
 using JuLIP, StaticArrays
 function gen_correlated_pos(dst, dim, num_of_atoms)
-    result = [rand(dst, dim) for _=0:num_of_atoms]
+    result = [rand(dst, dim) for _=1:num_of_atoms]
     return result
 end
 
