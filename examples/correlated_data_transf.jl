@@ -4,12 +4,14 @@ r_in = 0.85 # with envelope should be 0.0
 r_nn = 1.0
 r_cut = 3.0
 
-# morse transform
+# Morse transform
 x_morse(r, r_nn) = 1 / (1 + r / r_nn)
 
-#Agnesis Transform
+# Agnesis Transform
 # 0.33 = a = (p-1)/(p+1)
 x_agn(r, r_nn) = 1.0 / (1.0 + 0.33*(r / r_nn)^2)
+
+# use Agnesis
 x1(r) = x_agn(r, r_nn)
 x_in = x1(0.0); x_cut = x1(r_cut) # Regularize til r=0
 x(r) = 2 * (x1(r) - x_cut) / (x_in - x_cut) - 1
@@ -67,7 +69,7 @@ for num_sam in num_sam_list
        B = Testing_func(X)
 
        # for evaluating ground truth
-       poly_list = [poly(X[:, i]) for i = 1:K_R]
+       poly_list = [poly(x.(X[:, i])) for i = 1:K_R]
  
        for i = 1:length(NN2b)
           nn = NN2b[i]
@@ -107,7 +109,7 @@ for num_sam in num_sam_list
        XX_test = rand(distribution(-1, 1), (num_test, K_R))
        A_test = zeros(num_test, length(NN))
 
-       poly_list_test = [poly(XX_test[:, i]) for i = 1:K_R]
+       poly_list_test = [poly(x.(XX_test[:, i])) for i = 1:K_R]
 
        for i = 1:length(NN2b)
         nn = NN2b[i]

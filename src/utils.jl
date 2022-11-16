@@ -9,6 +9,7 @@ using Distributions
 using Random
 using Plots
 using CSV
+using JuLIP, StaticArrays
 
 """
 This function is for getting all the permutations which we used to calculate the coefficients, currently only for 2b baiss
@@ -129,3 +130,81 @@ function rand_radial(poly, N)
       println("Implementation Not found")
    end
 end
+
+"""
+This function generates positions of atoms as a vector in R^dim given a data distribution
+
+param: dst :: Int, data distribution, usually uniform
+param: dim :: Int, dimension of the atomic environment, 1D, 2D or 3D
+param: num_of_atoms :: Int, number of atoms in the atmoic configuration
+return: result :: Vector{Vector{Float64}}, an array of atom positions
+"""
+function gen_correlated_pos(dst, dim, num_of_atoms)
+    result = [rand(dst, dim) for _=1:num_of_atoms]
+    return result
+end
+
+"""
+This function generates positions of atoms that is more realistic
+
+keyparam: spc :: speices of atoms
+return: at, r_nn, X, Eref :: atomic environment, nearest radius distance, positions of atomis and reference energy
+"""
+function atom_bulk(spc=:Al)
+    at = bulk(spc, cubic=true) * 3
+    rattle!(at, 0.03)
+    r_nn = rnn(:W)
+    X = copy(positions(at))
+    
+    calc = StillingerWeber()
+    Eref = energy(calc, at)
+#     F = forces(pB, at)
+    
+    return at, r_nn, X, Eref
+end
+
+"""
+This function converts positions of atoms to radius distance vectors based on body interaction order
+
+param: pos :: Vector{Vector{Float64}}, positions of atoms
+param: order :: Int{2, 3}, body interaction order
+return: dis :: Vector{Vector{Float64}}, radius distance vector between #order body atomic interaction
+"""
+function pos_to_dist(pos, order)
+    if order == 2
+        dis = zeros(Float64, binomial(length(pos), 2))
+        d=1
+        for i=eachindex(pos)
+            for j=i:length(pos)
+                if i != j
+                    dis[d] = norm(pos[i] - pos[j])
+                    d += 1
+                end
+            end
+        end
+        @assert(length(dis) == d-1)
+        return dis
+    elseif order == 3
+      @show binomial(length(pos), 3)
+        dis = zeros(Float64, binomial(length(pos), 3))
+        @show length(dis)
+        d=1
+        for i=eachindex(pos)
+            for j=i:length(pos)
+               for k=j:length(pos)
+                  if i != j && j != k
+                     @show d
+                     dis[d] = norm(pos[i] - pos[j])
+                     dis[d+1] = norm(pos[i] - pos[k])
+                     d += 2
+                  end
+               end
+            end
+        end
+        @assert(length(dis) == d-1)
+        return dis
+    end
+end
+K_R = 3
+num_sam = 100
+X_3b = reduce(hcat, [pos_to_dist(gen_correlated_pos(Uniform(-10, 10), 3, K_R), 3) for _=1:num_sam])'
