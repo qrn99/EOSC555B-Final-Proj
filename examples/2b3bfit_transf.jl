@@ -62,7 +62,9 @@ for num_sam in num_sam_list
        path = exp_dir * "maxdeg="*string(max_degree)*"/num_sam="*string(num_sam)*"/"
        mkpath(path)
        # assume 2body generate dis comb
-       X = reduce(hcat, [pos_to_dist(gen_correlated_pos(Uniform(-10, 10), 3, K_R), 2) for _=1:num_sam])'
+    #    X = reduce(hcat, [pos_to_dist(gen_correlated_pos(Uniform(-10, 10), 3, K_R), 2) for _=1:num_sam])'
+       X = rand(distribution(r_in, r_cut+2), (num_sam, K_R))
+ 
  
        # initialize design matrix
        A_pure = zeros(num_sam, length(NN))
