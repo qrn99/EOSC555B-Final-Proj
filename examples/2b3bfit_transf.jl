@@ -108,7 +108,7 @@ for num_sam in num_sam_list
        end
        
        # testing
-       XX_test = rand(distribution(-1, 1), (num_test, K_R))
+       XX_test = rand(distribution(r_in, r_cut+2), (num_test, K_R))
        A_test = zeros(num_test, length(NN))
 
        poly_list_test = [poly(x.(XX_test[:, i])) for i = 1:K_R]
