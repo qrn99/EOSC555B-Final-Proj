@@ -184,27 +184,27 @@ function pos_to_dist(pos, order)
         end
         @assert(length(dis) == d-1)
         return dis
-    elseif order == 3
-      @show binomial(length(pos), 3)
-        dis = zeros(Float64, binomial(length(pos), 3))
-        @show length(dis)
-        d=1
-        for i=eachindex(pos)
-            for j=i:length(pos)
-               for k=j:length(pos)
-                  if i != j && j != k
-                     @show d
-                     dis[d] = norm(pos[i] - pos[j])
-                     dis[d+1] = norm(pos[i] - pos[k])
-                     d += 2
-                  end
-               end
-            end
-        end
-        @assert(length(dis) == d-1)
-        return dis
+   #  elseif order == 3
+   #    @show binomial(length(pos), 3)
+   #      dis = zeros(Float64, binomial(length(pos), 3))
+   #      @show length(dis)
+   #      d=1
+   #      for i=eachindex(pos)
+   #          for j=i:length(pos)
+   #             for k=j:length(pos)
+   #                if i != j && j != k
+   #                   @show d
+   #                   dis[d] = norm(pos[i] - pos[j])
+   #                   dis[d+1] = norm(pos[i] - pos[k])
+   #                   d += 2
+   #                end
+   #             end
+   #          end
+   #      end
+   #      @assert(length(dis) == d-1)
+   #      return dis
     end
 end
-K_R = 3
-num_sam = 100
-X_3b = reduce(hcat, [pos_to_dist(gen_correlated_pos(Uniform(-10, 10), 3, K_R), 3) for _=1:num_sam])'
+# K_R = 3
+# num_sam = 100
+# X_3b = reduce(hcat, [pos_to_dist(gen_correlated_pos(Uniform(-10, 10), 3, K_R), 3) for _=1:num_sam])'
