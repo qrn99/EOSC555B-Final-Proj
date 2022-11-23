@@ -12,9 +12,12 @@ x_morse(r, r_nn) = 1 / (1 + r / r_nn)
 x_agn(r, r_nn) = 1.0 / (1.0 + 0.33*(r / r_nn)^2)
 
 # use Agnesis
-x1(r) = x_agn(r, r_nn)
+# x1(r) = x_agn(r, r_nn)
+# use Morse
+x1(r) = x_morse(r, r_nn)
 x_in = x1(0.0); x_cut = x1(r_cut) # Regularize til r=0
 x(r) = 2 * (x1(r) - x_cut) / (x_in - x_cut) - 1
+# x(r) = r
 
 
 # -------------------------------------------------------testing functionss------------------------------------------#
@@ -30,7 +33,7 @@ exp_dir = "results/test_result_3b_Rastrigin_dnumsam_samedegree/" # result saving
 mkpath(exp_dir)
 distribution = Uniform # determinated by type of basis used
 solver = "qr" # solver, currently support qr and ARD
-num_sam_list = 10 .^(2:7) # number of data used in training
+num_sam_list = 10 .^(2:5) # number of data used in training
 num_test = 2000 # number of data used in test, will be drawn from the same distribution as training
 aa = num_sam_list[1]
 bb = num_sam_list[end]
@@ -63,7 +66,10 @@ for num_sam in num_sam_list
        mkpath(path)
        # assume 2body generate dis comb
     #    X = reduce(hcat, [pos_to_dist(gen_correlated_pos(Uniform(-10, 10), 3, K_R), 2) for _=1:num_sam])'
-       X = rand(distribution(r_in, r_cut+2), (num_sam, K_R))
+
+       X = rand(distribution(-1, 1), (num_sam, K_R))
+
+    #    X = rand(distribution(r_in, r_cut+2), (num_sam, K_R))
  
  
        # initialize design matrix
@@ -108,7 +114,10 @@ for num_sam in num_sam_list
        end
        
        # testing
-       XX_test = rand(distribution(r_in, r_cut+2), (num_test, K_R))
+    #    XX_test = rand(distribution(r_in, r_cut+2), (num_test, K_R))
+
+       XX_test = rand(distribution(-1, 1), (num_test, K_R))
+       
        A_test = zeros(num_test, length(NN))
 
        poly_list_test = [poly(x.(XX_test[:, i])) for i = 1:K_R]
