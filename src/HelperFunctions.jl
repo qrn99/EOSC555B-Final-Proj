@@ -1,7 +1,7 @@
 module HelperFunctions
 
 
-using FFTW, Plots, LinearAlgebra, LaTeXStrings, Random, Statistics, Interact, Distributions, Polynomials4ML
+using Plots, LinearAlgebra, Random, Statistics, Distributions, Polynomials4ML
 using PyCall, JuLIP
 
 export cheb, legendre, design_matrix, get_basis, generate_data, generate_data_dst,
