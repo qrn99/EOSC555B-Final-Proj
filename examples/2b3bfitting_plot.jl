@@ -80,9 +80,10 @@ let
     # f1(x) = x^2 - 10 * cos(2*pi*x) + 10
     # f1(x) = abs(x)^3
     f1(x) = 1/(1+8*x^2)
+    f2(x) = abs(x)^3
     E_avg(X, f) = sum([f.(X[:, i]) for i = 1:size(X)[2]])
      
-    Testing_func(X) = E_avg(X, f1)
+    Testing_func(X) = E_avg(X, f1) + E_avg(X, f2)
     solver = :qr
     max_degree = 10
     N = max_degree
@@ -177,12 +178,12 @@ let
     
 #    target_x = rand(distribution(domain_lower, domain_upper), (300, K_R))
     target_x = range(domain_lower, domain_upper, length=400)
-    p = plot(target_x, f1.(target_x), c=1,
+    p = plot(target_x, f1.(target_x)+f2.(target_x), c=1,
 #                         xlim=[-1.1, 1.1], ylim=[-1, 2],
                 label = "target", xlabel="x", ylabel="f(x)", title="")
     training_flatten = reduce(vcat, X)
     test_flatten = reduce(vcat, XX_test)
-    plot!(training_flatten, f1.(training_flatten), c=1, seriestype=:scatter, m=:o, ms=1, label = "")
+    plot!(training_flatten, f1.(training_flatten)+f2.(training_flatten), c=1, seriestype=:scatter, m=:o, ms=1, label = "")
     plot!(XX_test, yp, c=2, ls=:dash, label = "prediction")
     p
 end
