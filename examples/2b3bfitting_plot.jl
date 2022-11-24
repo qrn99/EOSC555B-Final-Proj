@@ -80,6 +80,7 @@ let
     E_avg(X, f) = sum([f.(X[:, i]) for i = 1:size(X)[2]])
      
     Testing_func(X) = E_avg(X, f1)
+    solver = :qr
     max_degree = 5
     N = max_degree
     ord = 1 # ord = body - 1
@@ -108,12 +109,12 @@ let
     end
     
 
-    if solver == "qr"
+    if solver == :qr
         # solve the problem with qr
         LL = length(NN)
         λ = 0.1
         sol_pure = qr(vcat(A_pure, λ * I(LL) + zeros(LL, LL))) \ vcat(B, zeros(LL))
-    elseif solver == "ARD"
+    elseif solver == :ard
     # solve the problem with ARD       
         ARD = pyimport("sklearn.linear_model")["ARDRegression"]
         clf = ARD()
