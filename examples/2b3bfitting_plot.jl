@@ -75,6 +75,7 @@ end
 ##
 
 let
+    M = 100
     N = BasisDeg
     testSampleSize = 100
     # f1(x) = x^2 - 10 * cos(2*pi*x) + 10
@@ -172,15 +173,17 @@ let
 
     # 2 body
     # yp = HelperFunctions.predict(XX_test, poly, sol_pure)
-    ground_yp = f1.(XX_test)
+    ground_yp = f1.(XX_test)+f2.(XX_test)
 
     println("relative error of pure basis: ", norm(yp - ground_yp)/norm(ground_yp))
+    println("RMSE: ", norm(yp - ground_yp)/sqrt(M))
+    
     
 #    target_x = rand(distribution(domain_lower, domain_upper), (300, K_R))
     target_x = range(domain_lower, domain_upper, length=400)
     p = plot(target_x, f1.(target_x)+f2.(target_x), c=1,
 #                         xlim=[-1.1, 1.1], ylim=[-1, 2],
-                label = "target", xlabel="x", ylabel="f(x)", title="")
+                label = "target", xlabel="x", ylabel="f(x)", title="basis maxdeg = $max_degree, sample size = $M")
     training_flatten = reduce(vcat, X)
     test_flatten = reduce(vcat, XX_test)
     plot!(training_flatten, f1.(training_flatten)+f2.(training_flatten), c=1, seriestype=:scatter, m=:o, ms=1, label = "")
