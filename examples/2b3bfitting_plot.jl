@@ -76,14 +76,18 @@ end
 
 let
     N = BasisDeg
-    f1(x) = x^2 - 10 * cos(2*pi*x) + 10
+    testSampleSize = 100
+    # f1(x) = x^2 - 10 * cos(2*pi*x) + 10
+    # f1(x) = abs(x)^3
+    f1(x) = 1/(1+8*x^2)
     E_avg(X, f) = sum([f.(X[:, i]) for i = 1:size(X)[2]])
      
     Testing_func(X) = E_avg(X, f1)
     solver = :qr
-    max_degree = 5
+    max_degree = 10
     N = max_degree
-    ord = 1 # ord = body - 1
+    ord = 2 # 2body ord = 1 = body - 1
+    # ord = 2 # 3body ord = 2 = body - 1
     NN = get_NN(max_degree, ord)
     NN2b = NN[length.(NN) .== 1] # for analysis
     NN3b = NN[length.(NN) .== 2]
@@ -121,12 +125,35 @@ let
         sol_pure = clf.fit(A_pure, B).coef_
     end
        
-    # XX_test = rand(distribution(domain_lower, domain_upper), (testSampleSize, K_R))
+    
     XX_test = range(-1, 1, length=testSampleSize)
     
     A_test = zeros(testSampleSize, length(NN))
 
-    yp = HelperFunctions.predict(XX_test, poly, sol_pure)
+    basis = poly(XX_test)
+    @show basis
+    @show size(XX_test)
+    poly_list_test = [basis[i, :] for i in 1:size(basis)[1]]
+    @show length(poly_list_test)
+    @show poly_list_test
+    println(A_test)
+    A_test[:, 1:length(NN2b)] = basis
+    @show A_test
+
+    for i = 1:length(NN3b)
+        @show length(NN3b)
+        nn, mm = NN3b[i]
+        @show NN3b
+        for PX1 in poly_list_test
+            @show PX1[nn, :]
+        end
+        A_test[:, length(NN2b) + i] = sum([basis[:, nn] .* basis[:, mm]])
+    end
+
+    # XX_test = rand(distribution(domain_lower, domain_upper), (testSampleSize, K_R))
+    # A_test = zeros(num_test, length(NN))
+
+    # poly_list_test = [poly(XX_test[:, i]) for i = 1:K_R]
 
     # for i = 1:length(NN2b)
     # nn = NN2b[i]
@@ -138,6 +165,12 @@ let
     #     A_test[:, length(NN2b) + i] = sum([PX1[:, nn] .* PX2[:, mm] for PX1 in poly_list_test for PX2 in poly_list_test if PX1 != PX2])
     # end
     # zs_pure = A_test * sol_pure
+    # ground_zs = Testing_func(XX_test)
+
+    yp = A_test * sol_pure
+
+    # 2 body
+    # yp = HelperFunctions.predict(XX_test, poly, sol_pure)
     ground_yp = f1.(XX_test)
 
     println("relative error of pure basis: ", norm(yp - ground_yp)/norm(ground_yp))
