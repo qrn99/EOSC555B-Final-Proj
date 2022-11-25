@@ -3,7 +3,6 @@ include("../src/utils.jl")
 
 using .HelperFunctions
 using LaTeXStrings, Interact
-using PyCall
 
 f1(x) = abs(x)^3
 f2(x) = 1/(1+8*x^2)
@@ -77,7 +76,7 @@ end
 
 let
     M = 1000
-    BasisDeg = 20
+    BasisDeg = 10
     N = BasisDeg
     testSampleSize = 500
     K_R=3
@@ -89,7 +88,6 @@ let
      
     # Testing_func(X) = E_avg(X, f1) + E_avg(X, f2)
     Testing_func(X) = E_avg(X, f2)
-    # solver = :ard
     solver = :qr
     max_degree = BasisDeg
     N = max_degree
@@ -103,27 +101,27 @@ let
     X = rand(distribution(domain_lower, domain_upper), (M, K_R))
 
     # initialize design matrix
-    A_pure = zeros(M, length(NN3b))
+    A_pure = zeros(M, length(NN))
     B = Testing_func(X)
 
     # for evaluating ground truth
     poly_list = [poly(X[:, i]) for i = 1:K_R]
-    # @show poly_list
+    @show poly_list
 
-    # for i = 1:length(NN2b)
-    #     nn = NN2b[i]
-    #     A_pure[:, i] = sum([PX1[:, nn] for PX1 in poly_list])
-    # end
-
-    for i = 1:length(NN3b)
-        nn, mm = NN3b[i]
-        A_pure[:, i] = sum([PX1[:, nn] .* PX2[:, mm] for PX1 in poly_list for PX2 in poly_list if PX1 != PX2])
+    for i = 1:length(NN2b)
+        nn = NN2b[i]
+        A_pure[:, i] = sum([PX1[:, nn] for PX1 in poly_list])
     end
+
+    # for i = 1:length(NN3b)
+    #     nn, mm = NN3b[i]
+    #     A_pure[:, length(NN2b) + i] = sum([PX1[:, nn] .* PX2[:, mm] for PX1 in poly_list for PX2 in poly_list if PX1 != PX2])
+    # end
     
-    clf = nothing
+
     if solver == :qr
         # solve the problem with qr
-        LL = length(NN3b)
+        LL = length(NN)
         λ = 0.1
         sol_pure = qr(vcat(A_pure, λ * I(LL) + zeros(LL, LL))) \ vcat(B, zeros(LL))
     elseif solver == :ard
@@ -131,30 +129,32 @@ let
         ARD = pyimport("sklearn.linear_model")["ARDRegression"]
         clf = ARD()
         sol_pure = clf.fit(A_pure, B).coef_
-        # sol_pure = clf.fit(A_pure, B).get_params()
-        # @show size(sol_pure)
-        # @show sol_pure
     end
        
     
     XX_test = range(-1, 1, length=testSampleSize)
     
-    A_test = zeros(testSampleSize, length(NN3b))
+    A_test = zeros(testSampleSize, length(NN))
 
     basis = poly(XX_test)
-    # @show basis
-    # @show size(XX_test)
+    @show basis
+    @show size(XX_test)
     # poly_list_test = [basis[i, :] for i in 1:size(basis)[1]]
     # @show length(poly_list_test)
     # @show poly_list_test
     # println(A_test)
-    # A_test[:, 1:length(NN2b)] = basis
+    A_test[:, 1:length(NN2b)] = basis
     # @show A_test
 
-    for i = 1:length(NN3b)
-        nn, mm = NN3b[i]
-        A_test[:, i] = sum([basis[:, nn] .* basis[:, mm]])
-    end
+    # for i = 1:length(NN3b)
+    #     @show length(NN3b)
+    #     nn, mm = NN3b[i]
+    #     @show NN3b
+    #     # for PX1 in poly_list_test
+    #     #     @show PX1[nn, :]
+    #     # end
+    #     A_test[:, length(NN2b) + i] = sum([basis[:, nn] .* basis[:, mm]])
+    # end
 
     # XX_test = rand(distribution(domain_lower, domain_upper), (testSampleSize, K_R))
     # A_test = zeros(num_test, length(NN))
@@ -174,7 +174,6 @@ let
     # ground_zs = Testing_func(XX_test)
 
     yp = A_test * sol_pure
-    # yp = clf.predict(A_test)
 
     # 2 body
     # yp = HelperFunctions.predict(XX_test, poly, sol_pure)
@@ -189,8 +188,7 @@ let
     # f1.(target_x)+
     p = plot(target_x, f2.(target_x), c=1,
 #                         xlim=[-1.1, 1.1], ylim=[-1, 2],
-                label = "target", xlabel="x", ylabel="f(x)", title="order=$ord, basis maxdeg = $max_degree, sample size = $M, K_R=$K_R, solver = $solver",
-                size = (1000, 800))
+                label = "target", xlabel="x", ylabel="f(x)", title="order=$ord, basis maxdeg = $max_degree, sample size = $M, K_R=$K_R")
     training_flatten = reduce(vcat, X)
     test_flatten = reduce(vcat, XX_test)
     # f1.(training_flatten)
