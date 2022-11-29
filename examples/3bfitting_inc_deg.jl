@@ -7,7 +7,8 @@ using PyCall
 
 f1(x) = 1/(1+8*x^2)
 f2(x) = abs(x)^3
-E_avg(X, f) = sum([f.(X[:, i]) for i = 1:size(X)[2]])
+# E_avg(X, f) = sum([f.(X[:, i]) for i = 1:size(X)[2]])
+E_avg(X, f) = sum([f.(X[:, i])/length(size(X)[2]) for i = 1:size(X)[2]])
 
 f = f1
 
