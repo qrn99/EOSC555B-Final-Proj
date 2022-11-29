@@ -1,15 +1,9 @@
 using Polynomials4ML, Test
-using Polynomials4ML: evaluate, evaluate_d, evaluate_dd
-using Polynomials4ML.Testing: println_slim, test_derivatives
-using LinearAlgebra: I
-using LinearAlgebra  
+using Polynomials4ML.Testing: println_slim, test_derivatives 
 using SparseArrays: SparseVector, sparse
-using Distributions
 # using Main.ACEcore: SimpleProdBasis
-using Random
-using Plots
-using CSV
-using JuLIP, StaticArrays
+using LinearAlgebra, Random, Plots, CSV, StaticArrays, Distributions
+using JuLIP, StaticArrays, PyCall
 
 """
 This function is for getting all the permutations which we used to calculate the coefficients, currently only for 2b baiss
@@ -194,6 +188,21 @@ function predMatNB(test, poly_basis, max_deg, ord; body=:TwoBodyThreeBody)
    end
    return A_test
 end
+
+function solveLSQ(A_pure, Y; λ=0.1, solver=:qr)
+   if solver == :qr
+      # solve the problem with qr
+      LL = size(A_pure)[2]
+      sol_pure = qr(vcat(A_pure, λ * I(LL) + zeros(LL, LL))) \ vcat(Y, zeros(LL))
+   elseif solver == :ard
+   # solve the problem with ARD       
+      ARD = pyimport("sklearn.linear_model")["ARDRegression"]
+      clf = ARD(fit_intercept=false).fit(A_pure, Y)
+      sol_pure = clf.coef_
+   end
+   return sol_pure
+end
+
 
 """
 This function generates positions of atoms as a vector in R^dim given a data distribution

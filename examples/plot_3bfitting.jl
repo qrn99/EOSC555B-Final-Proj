@@ -21,7 +21,9 @@ distribution=Uniform
 domain_lower=-1
 domain_upper=1
 K_R = 4
-noise=1e-4
+
+noise=0
+# noise=1e-4
 
 solver = :qr
 
@@ -34,18 +36,7 @@ Y = Testing_func(X)
 
 A_pure = designMatNB(X, poly, max_degree, ord; body = body_order)
 
-if solver == :qr
-    # solve the problem with qr
-    LL = size(A_pure)[2]
-    λ = 0.1
-    sol_pure = qr(vcat(A_pure, λ * I(LL) + zeros(LL, LL))) \ vcat(Y, zeros(LL))
-elseif solver == :ard
-# solve the problem with ARD       
-    ARD = pyimport("sklearn.linear_model")["ARDRegression"]
-    clf = ARD()
-    sol_pure = clf.fit(A_pure, Y).coef_
-end
-        
+sol_pure = solveLSQ(A_pure, Y; solver=solver)
 
 XX_test = range(domain_lower, domain_upper, length=testSampleSize)
 

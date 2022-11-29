@@ -10,7 +10,6 @@ f2(x) = abs(x)^3
 E_avg(X, f) = sum([f.(X[:, i]) for i = 1:size(X)[2]])
 
 f = f1
-Testing_func(X) = E_avg(X, f)
 
 ord = 2 #2b+3b, can access 3b only 
 body_order = :ThreeBody # 3b only
@@ -23,15 +22,17 @@ distribution=Uniform
 domain_lower=-1
 domain_upper=1
 
-noise=1e-4
+noise=0
+# noise=1e-4
 
-# solver = :qr
-solver = :ard
+solver = :qr
+# solver = :ard
 
 NN = [5, 10, 20, 30]
-MM = NN.^2 .+ 50
+MM = 10*NN.^2 .+ 50
 K_Rs = [2, 4, 12]
 let
+    Testing_func(X) = E_avg(X, f)
     plots = []
     # push!(plots, histogram(rand(Uniform(domain_lower, domain_upper), 500), bins = 20, title="Uniform Dist"))
     for K_R in K_Rs
@@ -43,30 +44,15 @@ let
         for t = eachindex(NN)
             M = MM[t]
             max_degree = NN[t]
-            @show max_degree
 
             poly = legendre_basis(max_degree, normalize = true)
 
             X = rand(distribution(domain_lower, domain_upper), (M, K_R))
-            Y = Testing_func(X)
+            Y = Testing_func(X) .+ noise
 
             A_pure = designMatNB(X, poly, max_degree, ord; body = body_order)
 
-            if solver == :qr
-                # solve the problem with qr
-                LL = size(A_pure)[2]
-                λ = 0.1
-                sol_pure = qr(vcat(A_pure, λ * I(LL) + zeros(LL, LL))) \ vcat(Y, zeros(LL))
-            elseif solver == :ard
-            # solve the problem with ARD       
-                ARD = pyimport("sklearn.linear_model")["ARDRegression"]
-                clf = ARD(fit_intercept=false).fit(A_pure, Y)
-                # sol_features = clf.coef_
-                # sol_intercept = clf.intercept_
-                # sol_pure = vcat(sol_intercept, sol_features)
-                sol_pure = clf.coef_
-
-            end
+            sol_pure = solveLSQ(A_pure, Y; solver=solver)
                     
             XX_test = range(domain_lower, domain_upper, length=testSampleSize)
 
