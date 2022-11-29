@@ -4,6 +4,7 @@ include("../src/utils.jl")
 using .HelperFunctions
 using LaTeXStrings, Interact
 
+##
 f1(x) = abs(x)^3
 f2(x) = 1/(1+8*x^2)
 E(f, Rs::Vector{Vector{Float64}}) = [ sum(f.(R))/length(R) for R in Rs ]
@@ -75,87 +76,65 @@ end
 ##
 
 let
-    M = 100
-    BasisDeg = 10
-    N = BasisDeg
-    testSampleSize = 500
-    K_R=4
-
-    # f2(x) = x^2 - 10 * cos(2*pi*x) + 10
     f1(x) = 1/(1+8*x^2)
     f2(x) = abs(x)^3
     E_avg(X, f) = sum([f.(X[:, i]) for i = 1:size(X)[2]])
-     
-    Testing_func(X) = E_avg(X, f1) + E_avg(X, f2)
+
+    M = 100
+    max_degree = 20
+    ord = 1 #2b+3b, can access 3b only 
+    body_order = :TwoBody
+
+    testSampleSize=400
+    test_uniform=true
+    adaptedTrainSize=testSampleSize
+
+    domain_lower=-1
+    domain_upper=1
+    K_R = 4
+    noise=1e-4
+
     solver = :qr
-    max_degree = BasisDeg
-    N = max_degree
-    # ord = 1 # 2body ord = 1 = body - 1
-    ord = 2 # 3body ord = 2 = body - 1
-    NN = get_NN(max_degree, ord)
-    NN2b = NN[length.(NN) .== 1] # for analysis
-    NN3b = NN[length.(NN) .== 2]
+
+    f = f2
+    Testing_func(X) = E_avg(X, f)
     poly = legendre_basis(max_degree, normalize = true)
 
     X = rand(distribution(domain_lower, domain_upper), (M, K_R))
+    Y = Testing_func(X)
 
-    # initialize design matrix
-    A_pure = zeros(M, length(NN))
-    B = Testing_func(X)
-
-    # for evaluating ground truth
-    poly_list = [poly(X[:, i]) for i = 1:K_R]
-
-    for i = 1:length(NN2b)
-        nn = NN2b[i]
-        A_pure[:, i] = sum([PX1[:, nn] for PX1 in poly_list])
-    end
-
-    for i = 1:length(NN3b)
-        nn, mm = NN3b[i]
-        A_pure[:, length(NN2b) + i] = sum([PX1[:, nn] .* PX2[:, mm] for PX1 in poly_list for PX2 in poly_list if PX1 != PX2])
-    end
-    
+    A_pure = designMatNB(X, poly, max_degree, ord; body = body_order)
 
     if solver == :qr
         # solve the problem with qr
-        LL = length(NN)
+        LL = size(A_pure)[2]
         λ = 0.1
-        sol_pure = qr(vcat(A_pure, λ * I(LL) + zeros(LL, LL))) \ vcat(B, zeros(LL))
+        sol_pure = qr(vcat(A_pure, λ * I(LL) + zeros(LL, LL))) \ vcat(Y, zeros(LL))
     elseif solver == :ard
     # solve the problem with ARD       
         ARD = pyimport("sklearn.linear_model")["ARDRegression"]
         clf = ARD()
-        sol_pure = clf.fit(A_pure, B).coef_
+        sol_pure = clf.fit(A_pure, Y).coef_
     end
-       
-    
+            
+
     XX_test = range(-1, 1, length=testSampleSize)
-    
-    A_test = zeros(testSampleSize, length(NN))
 
-    basis = poly(XX_test)
-    A_test[:, 1:length(NN2b)] = basis
-
-    for i = 1:length(NN3b)
-        nn, mm = NN3b[i]
-        A_test[:, length(NN2b) + i] = sum([basis[:, nn] .* basis[:, mm]])
-    end
-
+    A_test = predMatNB(XX_test, poly, max_degree, ord; body = body_order)
     yp = A_test * sol_pure
-    ground_yp = f1.(XX_test) + f2.(XX_test)
+    ground_yp = f.(XX_test)
 
     println("relative error of pure basis: ", norm(yp - ground_yp)/norm(ground_yp))
     println("RMSE: ", norm(yp - ground_yp)/sqrt(M))
-    
-#    target_x = rand(distribution(domain_lower, domain_upper), (300, K_R))
-    target_x = range(domain_lower, domain_upper, length=400)
-    p = plot(target_x, f1.(target_x)+f2.(target_x), c=1,
-#                         xlim=[-1.1, 1.1], ylim=[-1, 2],
+
+    target_x = range(domain_lower, domain_upper, length=500)
+    p = plot(target_x, f.(target_x), c=1,
+    #                         xlim=[-1.1, 1.1], ylim=[-1, 2],
+                size = (1000, 800),
                 label = "target", xlabel="x", ylabel="f(x)", title="order=$ord, basis maxdeg = $max_degree, sample size = $M, K_R=$K_R")
     training_flatten = reduce(vcat, X)
     test_flatten = reduce(vcat, XX_test)
-    plot!(training_flatten, f1.(training_flatten)+f2.(training_flatten), c=1, seriestype=:scatter, m=:o, ms=1, label = "")
+    plot!(training_flatten, f.(training_flatten), c=1, seriestype=:scatter, m=:o, ms=1, label = "")
     plot!(XX_test, yp, c=2, ls=:dash, label = "prediction")
     p
 end
