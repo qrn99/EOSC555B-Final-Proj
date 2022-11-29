@@ -138,9 +138,6 @@ function designMatNB(train, poly_basis, max_deg, ord; body=:TwoBodyThreeBody)
    M, K_R = size(train)
 
    poly_list = [poly_basis(train[:, i]) for i = 1:K_R]
-   @show poly_list
-   @show size(poly_list)
-
    if body == :TwoBody # 2body interaction
        A = zeros(M, length(NN2b))
        for i = 1:length(NN2b)
@@ -157,8 +154,6 @@ function designMatNB(train, poly_basis, max_deg, ord; body=:TwoBodyThreeBody)
        A = zeros(M, length(NN))
        for i = 1:length(NN2b)
            nn = NN2b[i]
-           @show poly_list[1][nn]
-           @show poly_list[1][:, nn]
            A[:, i] = sum([PX1[:, nn] for PX1 in poly_list])
        end
        for i = 1:length(NN3b)
