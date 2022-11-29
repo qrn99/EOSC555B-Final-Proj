@@ -148,7 +148,7 @@ function designMatNB(train, poly_basis, max_deg, ord; body=:TwoBodyThreeBody)
        A = zeros(M, length(NN3b))
        for i = 1:length(NN3b)
            nn, mm = NN3b[i]
-           A[:, length(NN2b) + i] = sum([PX1[:, nn] .* PX2[:, mm] for PX1 in poly_list for PX2 in poly_list if PX1 != PX2])
+           A[:, i] = sum([PX1[:, nn] .* PX2[:, mm] for PX1 in poly_list for PX2 in poly_list if PX1 != PX2])
        end
    elseif body == :TwoBodyThreeBody #both 2b3b
        A = zeros(M, length(NN))
@@ -187,7 +187,7 @@ function predMatNB(test, poly_basis, max_deg, ord; body=:TwoBodyThreeBody)
        A_test[:, 1:length(NN2b)] = poly_list
        for i = eachindex(NN3b)
            nn, mm = NN3b[i]
-           A_test[:, i] = sum([poly_list[:, nn] .* poly_list[:, mm]])
+           A_test[:, length(NN2b)+i] = sum([poly_list[:, nn] .* poly_list[:, mm]])
        end
    else
        println("Does not support this body order.")
