@@ -189,7 +189,7 @@ function predMatNB(test, poly_basis, max_deg, ord; body=:TwoBodyThreeBody)
        end
    elseif body == :TwoBodyThreeBody #both 2b3b
        A_test = zeros(M, length(NN))
-       A_test[:, 1:length(NN2b)] = basis
+       A_test[:, 1:length(NN2b)] = poly_list
        for i = eachindex(NN3b)
            nn, mm = NN3b[i]
            A_test[:, i] = sum([poly_list[:, nn] .* poly_list[:, mm]])
