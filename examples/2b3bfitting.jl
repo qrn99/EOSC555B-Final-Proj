@@ -1,4 +1,5 @@
 include("../src/utils.jl")
+using PyCall
 
 # -------------------------------------------------------testing functionss------------------------------------------#
 function Rastrigin(X)
@@ -12,7 +13,8 @@ max_degree = 15 # max_degree of polynomial
 exp_dir = "results/test_result_3b_Rastrigin_dnumsam_samedegree/" # result saving dir
 mkpath(exp_dir)
 distribution = Uniform # determinated by type of basis used
-solver = "qr" # solver, currently support qr and ARD
+solver = :qr # solver, currently support qr and ARD
+# solver = :ard
 num_sam_list = 10 .^(5:5) # number of data used in training
 num_test = 2000 # number of data used in test, will be drawn from the same distribution as training
 aa = num_sam_list[1]
@@ -76,15 +78,16 @@ for num_sam in num_sam_list
        end
        
 
-       if solver == "qr"
+       if solver == :qr
           # solve the problem with qr
           LL = length(NN)
           λ = 0.1
           sol_pure = qr(vcat(A_pure, λ * I(LL) + zeros(LL, LL))) \ vcat(B, zeros(LL))
-       elseif solver == "ARD"
+       elseif solver == :ard
        # solve the problem with ARD       
           ARD = pyimport("sklearn.linear_model")["ARDRegression"]
-          clf = ARD()
+          clf = ARD(fit_intercept=false)
+        #   clf = ARD()
           sol_pure = clf.fit(A_pure, B).coef_
        end
        
