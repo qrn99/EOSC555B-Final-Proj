@@ -131,6 +131,75 @@ function rand_radial(poly, N)
    end
 end
 
+function designMatNB(train, poly_basis, max_deg, ord; body=:TwoBodyThreeBody)
+   NN = get_NN(max_deg, ord)
+   NN2b = NN[length.(NN) .== 1]
+   NN3b = NN[length.(NN) .== 2]
+   M, K_R = size(train)
+
+   poly_list = [poly_basis(train[:, i]) for i = 1:K_R]
+   @show poly_list
+   @show size(poly_list)
+
+   if body == :TwoBody # 2body interaction
+       A = zeros(M, length(NN2b))
+       for i = 1:length(NN2b)
+           nn = NN2b[i]
+           A[:, i] = sum([PX1[:, nn] for PX1 in poly_list])
+       end
+   elseif body == :ThreeBody #3body interaction
+       A = zeros(M, length(NN3b))
+       for i = 1:length(NN3b)
+           nn, mm = NN3b[i]
+           A[:, length(NN2b) + i] = sum([PX1[:, nn] .* PX2[:, mm] for PX1 in poly_list for PX2 in poly_list if PX1 != PX2])
+       end
+   elseif body == :TwoBodyThreeBody #both 2b3b
+       A = zeros(M, length(NN))
+       for i = 1:length(NN2b)
+           nn = NN2b[i]
+           @show poly_list[1][nn]
+           @show poly_list[1][:, nn]
+           A[:, i] = sum([PX1[:, nn] for PX1 in poly_list])
+       end
+       for i = 1:length(NN3b)
+           nn, mm = NN3b[i]
+           A[:, length(NN2b) + i] = sum([PX1[:, nn] .* PX2[:, mm] for PX1 in poly_list for PX2 in poly_list if PX1 != PX2])
+       end
+   else
+       println("Does not support this body order.")
+   end
+   return A
+end
+
+function predMatNB(test, poly_basis, max_deg, ord; body=:TwoBodyThreeBody)
+   NN = get_NN(max_deg, ord)
+   NN2b = NN[length.(NN) .== 1]
+   NN3b = NN[length.(NN) .== 2]
+   M = length(test)
+
+   poly_list = poly_basis(test)
+
+   if body == :TwoBody # 2body interaction
+       return poly_list
+   elseif body == :ThreeBody #3body interaction
+       A_test = zeros(M, length(NN3b))
+       for i = eachindex(NN3b)
+           nn, mm = NN3b[i]
+           A_test[:, i] = sum([poly_list[:, nn] .* poly_list[:, mm]])
+       end
+   elseif body == :TwoBodyThreeBody #both 2b3b
+       A_test = zeros(M, length(NN))
+       A_test[:, 1:length(NN2b)] = basis
+       for i = eachindex(NN3b)
+           nn, mm = NN3b[i]
+           A_test[:, i] = sum([poly_list[:, nn] .* poly_list[:, mm]])
+       end
+   else
+       println("Does not support this body order.")
+   end
+   return A_test
+end
+
 """
 This function generates positions of atoms as a vector in R^dim given a data distribution
 
