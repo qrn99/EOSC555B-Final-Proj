@@ -46,7 +46,7 @@ elseif solver == :ard
 end
         
 
-XX_test = range(-1, 1, length=testSampleSize)
+XX_test = range(domain_lower, domain_upper, length=testSampleSize)
 
 A_test = predMatNB(XX_test, poly, max_degree, ord; body = body_order)
 yp = A_test * sol_pure
