@@ -25,7 +25,8 @@ domain_upper=1
 
 noise=1e-4
 
-solver = :qr
+# solver = :qr
+solver = :ard
 
 NN = [5, 10, 20, 30]
 MM = NN.^2 .+ 50
@@ -92,7 +93,7 @@ let
     end
     l = @layout [grid(length(K_Rs), length(NN)+1)]
         
-    plot(plots..., layout = l, size=(2500, 1000), margin=10mm, plot_title="order=$ord, noise=$noise, test_uniform=$test_uniform")
+    plot(plots..., layout = l, size=(2500, 1000), margin=10mm, plot_title="order=$ord, solver=$solver, noise=$noise, test_uniform=$test_uniform")
 end
 
 
