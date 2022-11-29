@@ -60,8 +60,12 @@ let
             elseif solver == :ard
             # solve the problem with ARD       
                 ARD = pyimport("sklearn.linear_model")["ARDRegression"]
-                clf = ARD()
-                sol_pure = clf.fit(A_pure, Y).coef_
+                clf = ARD(fit_intercept=false).fit(A_pure, Y)
+                # sol_features = clf.coef_
+                # sol_intercept = clf.intercept_
+                # sol_pure = vcat(sol_intercept, sol_features)
+                sol_pure = clf.coef_
+
             end
                     
             XX_test = range(domain_lower, domain_upper, length=testSampleSize)
@@ -85,7 +89,7 @@ let
             training_flatten = reduce(vcat, X)
             test_flatten = reduce(vcat, XX_test)
             plot!(training_flatten, f.(training_flatten), c=1, seriestype=:scatter, m=:o, ms=1, label = "")
-            plot!(XX_test, yp, c=2, ls=:dash, label = "prediction")
+            plot!(XX_test, yp, c=2, ls=:dash, lw=2, label = "prediction")
             push!(plots, p) 
         end
         plot!(P, MM, error', lw=1, m=:o, ms=3, label="K_R=$K_R")
