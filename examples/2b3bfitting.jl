@@ -18,10 +18,10 @@ max_degree = 15 # max_degree of polynomial
 exp_dir = "results/test_result_3b_Rastrigin_dnumsam_samedegree/" # result saving dir
 mkpath(exp_dir)
 distribution = Uniform # determinated by type of basis used
-solver = :qr # solver, currently support qr and ARD
-# solver = :ard
-num_sam_list = 10 .^(2:3) # number of data used in training
-num_test = 2000 # number of data used in test, will be drawn from the same distribution as training
+# solver = :qr # solver, currently support qr and ARD
+solver = :ard
+num_sam_list = 10 .^(2:5) # number of data used in training
+num_test = 1000 # number of data used in test, will be drawn from the same distribution as training
 aa = num_sam_list[1]
 bb = num_sam_list[end]
 testSampleSize = 500
