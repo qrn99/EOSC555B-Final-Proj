@@ -10,6 +10,13 @@ f2(x) = abs(x)^3
 # E_avg(X, f) = sum([f.(X[:, i]) for i = 1:size(X)[2]])
 E_avg(X, f) = sum([f.(X[:, i])/length(size(X)[2]) for i = 1:size(X)[2]])
 
+V2(X, f) = [f(X[j, :][1])+f(X[j, :][2])  for j = 1:size(X)[1]]
+
+# function E_avg3b(X, f)
+#     for i = eachindex()
+#     return
+# end
+
 M = 200
 max_degree = 20
 ord = 2 #2b+3b, can access 3b only 
@@ -21,7 +28,7 @@ distribution=Uniform
 
 domain_lower=-1
 domain_upper=1
-K_R = 4
+K_R = 2
 
 noise=0
 # noise=1e-4
@@ -29,7 +36,7 @@ noise=0
 solver = :qr
 
 f = f2
-Testing_func(X) = E_avg(X, f)
+Testing_func(X) = V2(X, f)
 poly = legendre_basis(max_degree, normalize = true)
 
 X = rand(distribution(domain_lower, domain_upper), (M, K_R))
