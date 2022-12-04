@@ -324,11 +324,11 @@ end
 
 function get_NN_exp(max_deg_exp, rotationInv = true)
     if rotationInv == true
-        NN_exp2b = [[i] for i = -max_deg_exp:max_deg_exp]
+        NN_exp2b = [[0]]
         NN_exp3b = [[i, -i] for i = 0:max_deg_exp]
         return NN_exp2b, NN_exp3b
    else
-        NN_exp2b = [[i] for i = -max_deg_exp:max_deg_exp]
+        NN_exp2b = [[0]]
         NN_exp3b = [[i, -j] for i = 0:max_deg_exp for j = 0:max_deg_exp]
         return NN_exp2b, NN_exp3b
    end
