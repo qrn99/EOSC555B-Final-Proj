@@ -27,7 +27,7 @@ end
 M = 2000
 max_deg_poly = 15
 max_deg_exp = 5
-ord = 1 #2b+3b, can access 3b only 
+ord = 2 #2b+3b, can access 3b only 
 body_order = :TwoBody
 
 testSampleSize=50
@@ -36,7 +36,7 @@ distribution=Uniform
 
 domain_lower=-1
 domain_upper=1
-K_R = 2
+K_R = 3
 
 noise=0
 # noise=1e-4
@@ -45,19 +45,17 @@ solver = :qr
 
 f = f1
 Testing_func(X) = E_avg(X, f)
-poly = legendre_basis(max_degree, normalize = true)
+poly = legendre_basis(max_deg_poly, normalize = true)
 
 train = rand(distribution(domain_lower, domain_upper), (M, K_R, 2))
 
-@show size([X[k, :, :] for k = 1:size(X)[1]])
-@show size(X)
-Y = Testing_func(X)
+#@show size([train[k, :, :] for k = 1:size(X)[1]])
+#@show size(X)
+Y = Testing_func(train)
 
 A_pure, spec = designMatNB2D(train, poly, max_deg_poly, max_deg_exp, ord; body= body_order)
-#@show A_pure
-@show cond(A_pure)
 @show size(A_pure)
-@show size(Y)
+# @show size(Y)
 sol_pure = solveLSQ(A_pure, Y; solver=solver)
 
 # XX_test = range(domain_lower, domain_upper, length=testSampleSize)
@@ -69,7 +67,7 @@ XX_test = rand(distribution(domain_lower, domain_upper), (testSampleSize, K_R, 2
 # XX_test_r2 = sort(rand(distribution(domain_lower, domain_upper), M))
 
 # A_test = predMatNB(XX_test, poly, max_degree, ord; body = body_order)
-A_test, spec_test = designMatNB2D(XX_test, poly, max_degree, max_deg_exp, ord; body = body_order)
+A_test, spec_test = designMatNB2D(XX_test, poly, max_deg_poly, max_deg_exp, ord; body = body_order)
 yp = A_test * sol_pure
 ground_yp = E_avg(XX_test, f)
 

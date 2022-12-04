@@ -311,13 +311,27 @@ end
 """
 function exp_basis(xs_theta, deg)
     num_sam = length(xs_theta)
-    B = zeros(ComplexF64, num_sam, deg)
+    B = zeros(ComplexF64, num_sam, 2 * deg + 1)
     for k = 1:num_sam
-        for j = 1:deg
-            B[k, j] = exp(1im * j * xs_theta[k])
+        for j = 1:2*deg + 1
+            pow = j - deg - 1
+            B[k, j] = exp(1im * pow * 2 * pi * xs_theta[k])
         end
     end
     return B
+end
+
+
+function get_NN_exp(max_deg_exp, rotationInv = true)
+    if rotationInv == true
+        NN_exp2b = [[i] for i = -max_deg_exp:max_deg_exp]
+        NN_exp3b = [[i, -i] for i = 0:max_deg_exp]
+        return NN_exp2b, NN_exp3b
+   else
+        NN_exp2b = [[i] for i = -max_deg_exp:max_deg_exp]
+        NN_exp3b = [[i, -j] for i = 0:max_deg_exp for j = 0:max_deg_exp]
+        return NN_exp2b, NN_exp3b
+   end
 end
 
 """
@@ -344,26 +358,26 @@ end
     A, spec = designMatNB2D(train, poly_basis, max_deg_poly, max_deg_exp, ord; body=:TwoBodyThreeBody)
     ```
 """
-function designMatNB2D(train, poly_basis, max_deg_poly, max_deg_exp, ord; body=:TwoBodyThreeBody) # TODO: remove ord later
+function designMatNB2D(train, poly_basis, max_deg_poly, max_deg_exp, ord; body=:TwoBodyThreeBody, rotationInv = true) # TODO: remove ord later
    NN = get_NN(max_deg_poly, ord)
    NN2b = NN[length.(NN) .== 1]
    NN3b = NN[length.(NN) .== 2]
-   NN_exp = get_NN(max_deg_exp, ord)
-   NN_exp2b = NN_exp[length.(NN_exp) .== 1]
-   NN_exp3b = NN_exp[length.(NN_exp) .== 2]
    
+   NN_exp2b, NN_exp3b = get_NN_exp(max_deg_exp, rotationInv)
    M, K_R, _ = size(train)
    xs_rad = spatial2rad(train) # num_data × K_R × 2
    poly_list = [poly_basis(xs_rad[:, i, 1]) for i = 1:K_R] #  K_R × num_data × length(poly_basis) 
    exp_list = [exp_basis(xs_rad[:, i, 2], max_deg_exp) for i = 1:K_R] #  K_R × num_data × max_deg_exp
    spec = []
+   
    if body == :TwoBody # 2body interaction
        A = zeros(ComplexF64, M, length(NN2b) * length(NN_exp2b))
        for i = 1:length(NN2b)
            nn = NN2b[i]
            for j = 1:length(NN_exp2b)
-               pp = NN_exp2b[j]
-               A[:, (i-1) * max_deg_exp + j] = sum([PX1[:, nn] .* EX1[:, pp]  for PX1 in poly_list for EX1 in exp_list])
+               pow = NN_exp2b[j] # actual power
+               pp = pow .+ max_deg_exp .+ 1 # index in the exp_list
+               A[:, (i-1) * length(NN_exp2b) + j] = sum([PX1[:, nn] .* EX1[:, pp]  for PX1 in poly_list for EX1 in exp_list])
                push!(spec, [(nn[1], pp[1])])
            end
        end
@@ -372,7 +386,8 @@ function designMatNB2D(train, poly_basis, max_deg_poly, max_deg_exp, ord; body=:
        for i = 1:length(NN3b)
            nn, mm = NN3b[i]
            for j = 1:length(NN_exp3b)
-               pp, qq = NN_exp3b[j]
+               pow_pp, pow_qq = NN_exp3b[j]
+               pp, qq = pow_pp .+ max_deg_exp .+ 1, pow_qq .+ max_deg_exp .+ 1 # index in the exp_list
                A[:, (i-1) * length(NN_exp3b) + j] = sum([PX1[:, nn] .* PX2[:, mm] .* EX1[:, pp] .* EX2[:, qq] for PX1 in poly_list for PX2 in poly_list for EX1 in exp_list for EX2 in exp_list if (PX1 != PX2 && EX1 != EX2)])
                push!(spec, [(nn, pp), (mm, qq)])
            end
@@ -380,21 +395,23 @@ function designMatNB2D(train, poly_basis, max_deg_poly, max_deg_exp, ord; body=:
    elseif body == :TwoBodyThreeBody #both 2b3b
        A = zeros(ComplexF64, M, length(NN2b) * length(NN_exp2b) + length(NN3b) * length(NN_exp3b))
        for i = 1:length(NN2b)
-           nn = NN2b[i]
-           for j = 1:length(NN_exp2b)
-               pp = NN_exp2b[j]
-               A[:, (i-1) * max_deg_exp + j] = sum([PX1[:, nn] .* EX1[:, pp]  for PX1 in poly_list for EX1 in exp_list])
-               push!(spec, [(nn[1], pp[1])])
-           end
+        nn = NN2b[i]
+        for j = 1:length(NN_exp2b)
+            pow = NN_exp2b[j] # actual power
+            pp = pow .+ max_deg_exp .+ 1 # index in the exp_list
+            A[:, (i-1) * length(NN_exp2b) + j] = sum([PX1[:, nn] .* EX1[:, pp]  for PX1 in poly_list for EX1 in exp_list])
+            push!(spec, [(nn[1], pp[1])])
+        end
        end
        for i = 1:length(NN3b)
-           nn, mm = NN3b[i]
-           for j = 1:length(NN_exp3b)
-               pp, qq = NN_exp3b[j]
-               A[:, length(NN2b) * length(NN_exp2b) + (i-1) * length(NN_exp3b) + j] = sum([PX1[:, nn] .* PX2[:, mm] .* EX1[:, pp] .* EX2[:, qq] for PX1 in poly_list for PX2 in poly_list for EX1 in exp_list for EX2 in exp_list if (PX1 != PX2 && EX1 != EX2)])
-               push!(spec, [(nn, pp), (mm, qq)])
-           end
-       end
+        nn, mm = NN3b[i]
+        for j = 1:length(NN_exp3b)
+            pow_pp, pow_qq = NN_exp3b[j]
+            pp, qq = pow_pp .+ max_deg_exp .+ 1, pow_qq .+ max_deg_exp .+ 1 # index in the exp_list
+            A[:, length(NN2b) * length(NN_exp2b) + (i-1) * length(NN_exp3b) + j] = sum([PX1[:, nn] .* PX2[:, mm] .* EX1[:, pp] .* EX2[:, qq] for PX1 in poly_list for PX2 in poly_list for EX1 in exp_list for EX2 in exp_list if (PX1 != PX2 && EX1 != EX2)])
+            push!(spec, [(nn, pp), (mm, qq)])
+        end
+    end
    else
        println("Does not support this body order.")
    end
