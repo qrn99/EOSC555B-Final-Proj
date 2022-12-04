@@ -21,18 +21,18 @@ V2(X, f_V2) = [f_V2(X[j, :][1], X[j, :][2]) for j = 1:size(X)[1]]
 #     return
 # end
 
-M = 200
-max_degree = 20
+M = 2000
+max_degree = 15
 ord = 2 #2b+3b, can access 3b only 
 body_order = :ThreeBody
 
-testSampleSize=400
+testSampleSize=50
 test_uniform=true
 distribution=Uniform
 
 domain_lower=-1
 domain_upper=1
-K_R = 2
+K_R = 4
 
 noise=0
 # noise=1e-4
@@ -47,7 +47,7 @@ X = rand(distribution(domain_lower, domain_upper), (M, K_R))
 Y = Testing_func(X)
 
 A_pure = designMatNB(X, poly, max_degree, ord; body = body_order)
-
+@show cond(A_pure)
 sol_pure = solveLSQ(A_pure, Y; solver=solver)
 
 # XX_test = range(domain_lower, domain_upper, length=testSampleSize)
@@ -64,19 +64,20 @@ yp = A_test * sol_pure
 ground_yp = V2(XX_test, f)
 
 println("relative error of pure basis: ", norm(yp - ground_yp)/norm(ground_yp))
-println("RMSE: ", norm(yp - ground_yp)/sqrt(M))
+println("RMSE: ", sqrt(norm(yp - ground_yp)/testSampleSize))
 
 target_x = range(domain_lower, domain_upper, length=500)
 target_y = range(domain_lower, domain_upper, length=500)
 target_z = f1_V2.(target_x, target_y)
 # V2(hcat(target_x, target_y)
+#plotly();
 p = plot(target_x, target_y, f, st=:surface,
 #                         xlim=[-1.1, 1.1], ylim=[-1, 2],
-            size = (1000, 800),
+            size = (1000, 800), alpha = 0.5,
             label = "target", xlabel="x", ylabel="f(x)", title="order=$ord, basis maxdeg = $max_degree, sample size = $M, K_R=$K_R")
 training_flatten = reduce(vcat, X)
 test_flatten = reduce(vcat, XX_test)
-scatter!(X[:, 1], X[:, 2], Y, seriestype=:scatter, m=:o, ms=1, label = "")
-plot!(XX_test, yp, c=2, ls=:dash, label = "prediction")
+scatter!(X[:, 1], X[:, 2], Y, seriestype=:scatter, m=:o, markercolor = :red, ms=1.5, label = "ground truth")
+scatter!(XX_test[:,1], XX_test[:, 2], yp, seriestype=:scatter, m=:o, markercolor=:green, ms=1, label = "prediction")
 p
 
