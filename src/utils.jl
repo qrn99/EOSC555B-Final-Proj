@@ -282,6 +282,33 @@ end
 # num_sam = 100
 # X_3b = reduce(hcat, [pos_to_dist(gen_correlated_pos(Uniform(-10, 10), 3, K_R), 3) for _=1:num_sam])'
 
+function permDist(D, ord)
+    DD = Vector[]
+    if ord == 1
+        return D
+    elseif ord == 2
+        for m = eachindex(D)
+            R = D[m]
+            R_pair = Vector[]
+            pair_index = 0
+            stop = binomial(length(R), ord)
+            for i = eachindex(R)
+                for j = eachindex(R)
+                    if i != j && pair_index != stop
+                        push!(R_pair, [R[i], R[j]])
+                        pair_index += 1
+                    end
+                end
+            end
+            @assert(length(R_pair) == stop)
+            push!(DD, R_pair)
+        end
+    else
+        println("Does not support this body order.")
+    end
+    return DD
+ end
+ 
 # ----- 2D implementation ------
 """
     spatial2rad(xs)
