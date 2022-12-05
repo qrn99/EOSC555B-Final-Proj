@@ -8,25 +8,19 @@ using PyCall
 f1(x) = 1/(1+8*x^2)
 f2(x) = abs(x)^3
 
-f1_V2(x, y) = x^2 + y^2
-f2_V2(X) = sum([X[:, i].^2 - 10 * cos.(2 * pi * X[:, i]) .+ 10 for i = 1:size(X)[2]])
+f1_V2(xx) = xx[1]^2 + xx[2]^2
+f2_V2(xx) = xx[1]^2 - 10 * cos(2*pi*xx[2]^2)
+plot_2D(x, y, f) = f([x, y]) 
+V2(Xs, f_V2) = [f_V2(Xs[j, :][1], Xs[j, :][2]) for j = 1:size(Xs)[1]]
 
-# E_avg(X, f) = sum([f.(X[:, i]) for i = 1:size(X)[2]])
-E_avg(X, f) = sum([f.(X[:, i])/length(size(X)[2]) for i = 1:size(X)[2]])
+E_avg(Xs, f) = [sum([f(xx) for xx in Xs[i]])/length(Xs[i]) for i = 1:size(Xs)[1]]
 
-V2(X, f_V2) = [f_V2(X[j, :][1], X[j, :][2]) for j = 1:size(X)[1]]
-
-# function E_avg3b(X, f)
-#     for i = eachindex()
-#     return
-# end
-
-M = 2000
-max_degree = 15
+M = 100
+max_degree = 5
 ord = 2 #2b+3b, can access 3b only 
 body_order = :ThreeBody
 
-testSampleSize=50
+testSampleSize=400
 test_uniform=true
 distribution=Uniform
 
@@ -37,47 +31,57 @@ K_R = 4
 noise=0
 # noise=1e-4
 
-solver = :qr
+solver = :ard
 
-f = f1_V2
-Testing_func(X) = V2(X, f)
+f = f2_V2
+Testing_func(X) = E_avg(X, f)
 poly = legendre_basis(max_degree, normalize = true)
 
-X = rand(distribution(domain_lower, domain_upper), (M, K_R))
-Y = Testing_func(X)
+D = [rand(distribution(domain_lower, domain_upper), K_R) for _=1:M]
+X = reduce(vcat, D')
+D2 = permDist(D, ord) # generate ord needed distances pair
+
+J = size(D2[1])
+train = reduce(hcat, D2)
+
+# train = rand(distribution(domain_lower, domain_upper), (M, K_R, ord))
+Y = Testing_func(D2)
 
 A_pure = designMatNB(X, poly, max_degree, ord; body = body_order)
 @show cond(A_pure)
+
+# get sol
 sol_pure = solveLSQ(A_pure, Y; solver=solver)
 
-# XX_test = range(domain_lower, domain_upper, length=testSampleSize)
+# prediction error 
+DD_test = [rand(distribution(domain_lower, domain_upper), K_R) for _=1:testSampleSize]
+XX_test = reduce(vcat, DD_test')
 
-XX_test = rand(distribution(domain_lower, domain_upper), (testSampleSize, K_R))
-XX_test = XX_test[sortperm(XX_test[:, 1]), :]
+DD_test2D = permDist(DD_test, ord) # generate ord needed distances pair
+DD_test2D = DD_test2D[sortperm(DD_test2D[:, 1]), :]
+DD_test2D = reduce(vcat, DD_test2D')
+DD_test2D_plot = reduce(vcat, DD_test2D)
 
-# XX_test_r1 = sort(rand(distribution(domain_lower, domain_upper), M))
-# XX_test_r2 = sort(rand(distribution(domain_lower, domain_upper), M))
-
-# A_test = predMatNB(XX_test, poly, max_degree, ord; body = body_order)
-A_test = designMatNB(XX_test, poly, max_degree, ord; body = body_order)
+A_test = designMatNB(DD_test2D_plot, poly, max_degree, ord; body = body_order)
 yp = A_test * sol_pure
-ground_yp = V2(XX_test, f)
+
+ground_yp = reduce(vcat, [f.(DD_test2D[i, :]) for i=1:testSampleSize])
 
 println("relative error of pure basis: ", norm(yp - ground_yp)/norm(ground_yp))
 println("RMSE: ", sqrt(norm(yp - ground_yp)/testSampleSize))
 
 target_x = range(domain_lower, domain_upper, length=500)
 target_y = range(domain_lower, domain_upper, length=500)
-target_z = f1_V2.(target_x, target_y)
-# V2(hcat(target_x, target_y)
-#plotly();
-p = plot(target_x, target_y, f, st=:surface,
-#                         xlim=[-1.1, 1.1], ylim=[-1, 2],
-            size = (1000, 800), alpha = 0.5,
-            label = "target", xlabel="x", ylabel="f(x)", title="order=$ord, basis maxdeg = $max_degree, sample size = $M, K_R=$K_R")
-training_flatten = reduce(vcat, X)
-test_flatten = reduce(vcat, XX_test)
-scatter!(X[:, 1], X[:, 2], Y, seriestype=:scatter, m=:o, markercolor = :red, ms=1.5, label = "ground truth")
-scatter!(XX_test[:,1], XX_test[:, 2], yp, seriestype=:scatter, m=:o, markercolor=:green, ms=1, label = "prediction")
+plot_V2(x, y) = plot_2D.(x, y, f)
+
+plotly();
+p = plot(target_x, target_y, plot_V2, st=:surface, 
+        legend = :outerbottomright,
+        # xlim=[-1.1, 1.1], ylim=[-1, 2],
+        # size = (1000, 800),
+        alpha = 0.5,
+        label = "target", xlabel="x", ylabel="f(x)", title="order=$ord, basis maxdeg = $max_degree, sample size = $M, K_R=$K_R")
+scatter!(X[:, 1], X[:, 2], Y, seriestype=:scatter, c=0, ms=0.5, label = "train")
+scatter!(DD_test2D_plot[:, 1], DD_test2D_plot[:, 2], yp, seriestype=:scatter, c=2, ms=1, label = "prediction")
 p
 
