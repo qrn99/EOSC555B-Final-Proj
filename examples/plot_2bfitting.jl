@@ -86,7 +86,7 @@ let
     ord = 1 #2b+3b, can access 3b only 
     body_order = :TwoBody
 
-    testSampleSize=400
+    testSampleSize=500
     test_uniform=true
     distribution=Uniform
 
@@ -110,9 +110,14 @@ let
 
     sol_pure = solveLSQ(A_pure, Y; solver=solver)
 
-    XX_test = range(domain_lower, domain_upper, length=testSampleSize)
+    # XX_test = range(domain_lower, domain_upper, length=testSampleSize)
+    # A_test = predMatNB(XX_test, poly, max_degree, ord; body = body_order)
 
-    A_test = predMatNB(XX_test, poly, max_degree, ord; body = body_order)
+    XX_test = rand(distribution(domain_lower, domain_upper), (testSampleSize, 1))
+    XX_test = XX_test[sortperm(XX_test[:, 1]), :]
+
+    A_test = designMatNB(XX_test, poly, max_degree, ord; body = body_order)
+
     yp = A_test * sol_pure
     ground_yp = f.(XX_test)
 
