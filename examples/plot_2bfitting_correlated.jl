@@ -61,21 +61,21 @@ let
 
     # X = rand(distribution(domain_lower, domain_upper), (M, K_R))
 
-    # #--- random pos of atom ---#
-    # # dim = 3, K_R = num_of_atoms
-    # X = reduce(hcat, [pos_to_dist(gen_correlated_pos(Uniform(-10, 10), 3, K_R), 2) for _=1:M])'
-    # #--- end ---#
+    #--- random pos of atom ---#
+    # dim = 3, K_R = num_of_atoms
+    X = reduce(hcat, [pos_to_dist(gen_correlated_pos(Uniform(-10, 10), 3, K_R), 2) for _=1:M])'
+    #--- end ---#
 
     #--- atomic strucutres ---#
-    # concat pos into an matrix where each row is one atom pos
-    train_pos = []
-    for i=1:M
-        at, r_nn, R, Eref = atom_bulk()
-        push!(train_pos, R) 
-    end
-    X = [pos_to_dist(pos, 2) for pos in train_pos]
-    X = reduce(hcat, X)
-    #--- end ---#
+    # # concat pos into an matrix where each row is one atom pos
+    # train_pos = []
+    # for i=1:M
+    #     at, r_nn, R, Eref = atom_bulk()
+    #     push!(train_pos, R) 
+    # end
+    # X = [pos_to_dist(pos, 2) for pos in train_pos]
+    # X = reduce(hcat, X)
+    # #--- end ---#
 
     Y = Testing_func(X) .+ noise
 
