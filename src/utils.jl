@@ -408,13 +408,16 @@ function designMatNB2D(train, poly_basis, max_deg_poly, max_deg_exp, ord; body=:
 
    
    if body == :TwoBody # 2body interaction
-       A = zeros(ComplexF64, M, length(NN2b) * length(NN_exp2b))
+        A = zeros(ComplexF64, M, length(NN2b) * length(NN_exp2b))
        for i = 1:length(NN2b)
            nn = NN2b[i]
            for j = 1:length(NN_exp2b)
+               #@show i, j
+               #@show (i-1) * length(NN_exp2b) + j
                pow = NN_exp2b[j] # actual power
                pp = pow .+ max_deg_exp .+ 1 # index in the exp_list
-               A[:, (i-1) * length(NN_exp2b) + j] = sum([PX1[:, nn] .* EX1[:, pp]  for PX1 in poly_list for EX1 in exp_list])
+               @show length([PX1[:, nn] for PX1 in poly_list])
+               A[:, (i-1) * length(NN_exp2b) + j] = sum([PX1[:, nn] for PX1 in poly_list])
                push!(spec, [(nn[1], pp[1])])
            end
        end
@@ -452,6 +455,6 @@ function designMatNB2D(train, poly_basis, max_deg_poly, max_deg_exp, ord; body=:
    else
        println("Does not support this body order.")
    end
-
+   
    return real(A) / K_R, spec
 end
