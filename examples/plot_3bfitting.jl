@@ -15,12 +15,12 @@ plot_2D(x, y, f) = f([x, y])
 
 E_avg(Xs, f) = [sum([f(xx) for xx in Xs[i]])/length(Xs[i]) for i = 1:size(Xs)[1]]
 
-M = 200
-max_degree = 15
+M = 500
+max_degree = 20
 ord = 2 #2b+3b, can access 3b only 
 body_order = :ThreeBody
 
-testSampleSize=400
+testSampleSize=1000
 test_uniform=true
 distribution=Uniform
 
@@ -31,18 +31,21 @@ K_R = 4
 noise=0
 # noise=1e-4
 
-solver = :qr
+# solver = :qr
+solver = :ard
 
 f = f1_V2
+# f = f2_V2
 Testing_func(X) = E_avg(X, f)
 poly = legendre_basis(max_degree, normalize = true)
 
 D = [rand(distribution(domain_lower, domain_upper), K_R) for _=1:M]
-X = reduce(vcat, D')
+X = reduce(vcat, D') # data size M x K_R
 D2 = permDist(D, ord) # generate ord needed distances pair
 
 J = size(D2[1])
 X_plot = reduce(hcat, reduce(hcat, D2))
+# @show size(X_plot)
 
 # train = rand(distribution(domain_lower, domain_upper), (M, K_R, ord))
 Y = Testing_func(D2)
@@ -54,22 +57,29 @@ A_pure = designMatNB(X, poly, max_degree, ord; body = body_order)
 sol_pure = solveLSQ(A_pure, Y; solver=solver)
 
 # prediction error 
-DD_test = [rand(distribution(domain_lower, domain_upper), K_R) for _=1:testSampleSize]
+# predict two dist clusters
 XX_test = rand(distribution(domain_lower, domain_upper), (testSampleSize, 2))
+DD_test_pair = [[XX_test[i, :]] for i=1:testSampleSize]
 
-# XX_test = reduce(vcat, DD_test')
-# DD_test2D = permDist(DD_test, ord) # generate ord needed distances pair
-# DD_test2D = DD_test2D[sortperm(DD_test2D[:, 1]), :]
-# DD_test2D = reduce(vcat, DD_test2D')
-# DD_test2D_plot = reduce(vcat, DD_test2D)
+# predict larger cluster
+# K_R_test = K_R
+# DD_test = [rand(distribution(domain_lower, domain_upper), K_K_R_testR) for _=1:testSampleSize]
+# XX_test = reduce(vcat, DD_test') # data size M x K_R
+# DD_test_pair = permDist(DD_test, ord) # (testSampleSize x K_R*(K_R-1) x 2)
+
+Ep = Testing_func(DD_test_pair)
 
 A_test = designMatNB(XX_test, poly, max_degree, ord; body = body_order)
 yp = A_test * sol_pure
 
+# ground_yp = [f(DD_test_pair[i][j]) for i=1:testSampleSize, j=1:binomial(K_R,2)]
 ground_yp = [f(XX_test[i, :]) for i=1:testSampleSize]
 
 println("relative error of pure basis: ", norm(yp - ground_yp)/norm(ground_yp))
 println("RMSE: ", sqrt(norm(yp - ground_yp)/testSampleSize))
+
+println("relative error of E: ", norm(yp - Ep)/norm(Ep))
+println("RMSE of E: ", sqrt(norm(yp - Ep)/testSampleSize))
 
 target_x = range(domain_lower, domain_upper, length=500)
 target_y = range(domain_lower, domain_upper, length=500)
@@ -83,6 +93,7 @@ p = plot(target_x, target_y, plot_V2, st=:surface,
         alpha = 0.5,
         label = "target", xlabel="x", ylabel="f(x)", title="order=$ord, basis maxdeg = $max_degree, sample size = $M, K_R=$K_R")
 scatter!(X_plot[1, :], X_plot[2, :], plot_V2(X_plot[1, :], X_plot[2, :]), seriestype=:scatter, c=0, ms=0.5, label = "train")
-scatter!(XX_test[:, 1], XX_test[:, 2], yp, seriestype=:scatter, c=2, ms=1, label = "prediction")
+test_plot = reduce(hcat, reduce(hcat, DD_test_pair))'
+scatter!(test_plot[:, 1], test_plot[:, 2], yp, seriestype=:scatter, c=2, ms=1, label = "prediction")
 p
 
