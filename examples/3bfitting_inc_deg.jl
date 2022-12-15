@@ -5,17 +5,19 @@ using .HelperFunctions
 using LaTeXStrings, Interact
 using PyCall
 
-f1(x) = 1/(1+8*x^2)
-f2(x) = abs(x)^3
-# E_avg(X, f) = sum([f.(X[:, i]) for i = 1:size(X)[2]])
-E_avg(X, f) = sum([f.(X[:, i])/length(size(X)[2]) for i = 1:size(X)[2]])
+f1_V2(xx) = xx[1]^2 + xx[2]^2
+f2_V2(xx) = xx[1]^2 - 10 * cos(2*pi*xx[2]^2)
+plot_2D(x, y, f) = f([x, y]) 
+# V2(Xs, f_V2) = [f_V2(Xs[j, :][1], Xs[j, :][2]) for j = 1:size(Xs)[1]]
 
-f = f1
+E_avg(Xs, f) = [sum([f(xx) for xx in Xs[i]])/length(Xs[i]) for i = 1:size(Xs)[1]]
+
+f = f1_V2
 
 ord = 2 #2b+3b, can access 3b only 
-body_order = :ThreeBody # 3b only
+body_order = :ThreeBody
 
-testSampleSize=400
+testSampleSize=1000
 test_uniform=true
 adaptedTrainSize=testSampleSize
 distribution=Uniform
@@ -26,13 +28,15 @@ domain_upper=1
 noise=0
 # noise=1e-4
 
-solver = :qr
-# solver = :ard
+# solver = :qr
+solver = :ard
 
-NN = [5, 10, 20, 30]
-MM = 10*NN.^2 .+ 50
-K_Rs = [2, 4, 12]
+NN = [5, 10, 20]
+MM = 10*NN.^2
+K_Rs = [2, 3, 4, 8]
 let
+    f = f1_V2
+    # f = f2_V2
     Testing_func(X) = E_avg(X, f)
     plots = []
     # push!(plots, histogram(rand(Uniform(domain_lower, domain_upper), 500), bins = 20, title="Uniform Dist"))
@@ -47,44 +51,69 @@ let
             max_degree = NN[t]
 
             poly = legendre_basis(max_degree, normalize = true)
+            D = [rand(distribution(domain_lower, domain_upper), K_R) for _=1:M]
+            X = reduce(vcat, D') # data size M x K_R
+            D2 = permDist(D, ord) # generate ord needed distances pair
 
-            X = rand(distribution(domain_lower, domain_upper), (M, K_R))
-            Y = Testing_func(X) .+ noise
+            J = size(D2[1])
+            X_plot = reduce(hcat, reduce(hcat, D2))
+
+            Y = Testing_func(D2)
 
             A_pure = designMatNB(X, poly, max_degree, ord; body = body_order)
+            @show cond(A_pure)
 
+            # get sol
             sol_pure = solveLSQ(A_pure, Y; solver=solver)
-                    
-            XX_test = range(domain_lower, domain_upper, length=testSampleSize)
 
-            A_test = predMatNB(XX_test, poly, max_degree, ord; body = body_order)
+            # prediction error 
+            # predict two dist clusters
+            XX_test = rand(distribution(domain_lower, domain_upper), (testSampleSize, 2))
+            DD_test_pair = [[XX_test[i, :]] for i=1:testSampleSize]
+
+            Ep = Testing_func(DD_test_pair)
+
+            A_test = designMatNB(XX_test, poly, max_degree, ord; body = body_order)
             yp = A_test * sol_pure
-            ground_yp = f.(XX_test)
-            RMSE = norm(yp - ground_yp)/sqrt(M)
 
-            println("Max Basis Deg: $max_degree")
-            println("Relative error: ", norm(yp - ground_yp)/norm(ground_yp))
+            ground_yp = [f(XX_test[i, :]) for i=1:testSampleSize]
+
+            Norm_diff = norm(yp - ground_yp)
+            RMSE = Norm_diff/sqrt(testSampleSize)
+            println("Max Basis Deg: $max_degree, K_R: $K_R")
+            println("relative error of pure basis: ", Norm_diff/norm(ground_yp))
             println("RMSE: ", RMSE)
+
+            println("relative error of E: ", norm(yp - Ep)/norm(Ep))
+            println("RMSE of E: ", norm(yp - Ep)/sqrt(testSampleSize))
+
+            target_x = range(domain_lower, domain_upper, length=500)
+            target_y = range(domain_lower, domain_upper, length=500)
+            plot_V2(x, y) = plot_2D.(x, y, f)
 
             error[t] = RMSE
 
             target_x = range(domain_lower, domain_upper, length=500)
-            p = plot(target_x, f.(target_x), c=1,
-            #                         xlim=[-1.1, 1.1], ylim=[-1, 2],
-                        size = (1000, 800),
-                        label = "target", xlabel="x", ylabel="f(x)", title="maxdeg = $max_degree, sample size = $M")
-            training_flatten = reduce(vcat, X)
-            test_flatten = reduce(vcat, XX_test)
-            plot!(training_flatten, f.(training_flatten), c=1, seriestype=:scatter, m=:o, ms=1, label = "")
-            plot!(XX_test, yp, c=2, ls=:dash, lw=2, label = "prediction")
-            push!(plots, p) 
+            plotly();
+            p = plot(target_x, target_y, plot_V2, st=:surface, 
+                    legend = :outerbottomright,
+                    # xlim=[-1.1, 1.1], ylim=[-1, 2],
+                    # size = (1000, 800),
+                    alpha = 0.5,
+                    label = "target", xlabel="x", ylabel="f(x)", title="order=$ord, basis maxdeg = $max_degree, sample size = $M, K_R=$K_R")
+            scatter!(X_plot[1, :], X_plot[2, :], plot_V2(X_plot[1, :], X_plot[2, :]), seriestype=:scatter, c=0, ms=0.5, label = "train")
+            test_plot = reduce(hcat, reduce(hcat, DD_test_pair))'
+            scatter!(test_plot[:, 1], test_plot[:, 2], yp, seriestype=:scatter, c=2, ms=1, label = "prediction")
+            push!(plots, p)
         end
         plot!(P, MM, error', lw=1, m=:o, ms=3, label="K_R=$K_R")
         push!(plots, P)
     end
     l = @layout [grid(length(K_Rs), length(NN)+1)]
         
-    plot(plots..., layout = l, size=(2500, 1000), margin=10mm, plot_title="order=$ord, solver=$solver, noise=$noise, test_uniform=$test_uniform")
+    plot(plots..., layout = l, 
+    size=(2500, 1000), 
+    margin=10mm, plot_title="order=$ord, solver=$solver, noise=$noise, test_uniform=$test_uniform")
 end
 
 
