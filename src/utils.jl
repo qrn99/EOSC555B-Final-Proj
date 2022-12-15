@@ -308,7 +308,7 @@ function permDist(D, ord)
     end
     return DD
  end
- 
+
 # ----- 2D implementation ------
 """
     spatial2rad(xs)
