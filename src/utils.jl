@@ -361,6 +361,10 @@ function get_NN_exp(max_deg_exp, rotationInv = true)
    end
 end
 
+# function dist_transform_2d(Xs)
+    
+
+
 """
     designMatNB2D(train, poly_basis, max_deg_poly, max_deg_exp, ord; body=:TwoBodyThreeBody)
     Returns the design matrix for averaged estimation 2D model and spec
@@ -386,25 +390,34 @@ end
     ```
 """
 function designMatNB2D(train, poly_basis, max_deg_poly, max_deg_exp, ord; body=:TwoBodyThreeBody, rotationInv = true) # TODO: remove ord later
+   if body == :TwoBody
+        ord = 1
+   else
+        ord = 2
+   end
+
    NN = get_NN(max_deg_poly, ord)
    NN2b = NN[length.(NN) .== 1]
    NN3b = NN[length.(NN) .== 2]
-   
    NN_exp2b, NN_exp3b = get_NN_exp(max_deg_exp, rotationInv)
    M, K_R, _ = size(train)
    xs_rad = spatial2rad(train) # num_data × K_R × 2
    poly_list = [poly_basis(xs_rad[:, i, 1]) for i = 1:K_R] #  K_R × num_data × length(poly_basis) 
    exp_list = [exp_basis(xs_rad[:, i, 2], max_deg_exp) for i = 1:K_R] #  K_R × num_data × max_deg_exp
    spec = []
+
    
    if body == :TwoBody # 2body interaction
-       A = zeros(ComplexF64, M, length(NN2b) * length(NN_exp2b))
+        A = zeros(ComplexF64, M, length(NN2b) * length(NN_exp2b))
        for i = 1:length(NN2b)
            nn = NN2b[i]
            for j = 1:length(NN_exp2b)
+               #@show i, j
+               #@show (i-1) * length(NN_exp2b) + j
                pow = NN_exp2b[j] # actual power
                pp = pow .+ max_deg_exp .+ 1 # index in the exp_list
-               A[:, (i-1) * length(NN_exp2b) + j] = sum([PX1[:, nn] .* EX1[:, pp]  for PX1 in poly_list for EX1 in exp_list])
+               @show length([PX1[:, nn] for PX1 in poly_list])
+               A[:, (i-1) * length(NN_exp2b) + j] = sum([PX1[:, nn] for PX1 in poly_list])
                push!(spec, [(nn[1], pp[1])])
            end
        end
@@ -442,5 +455,6 @@ function designMatNB2D(train, poly_basis, max_deg_poly, max_deg_exp, ord; body=:
    else
        println("Does not support this body order.")
    end
-   return A, spec
+   
+   return real(A) / K_R, spec
 end
