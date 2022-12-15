@@ -15,7 +15,7 @@ plot_2D(x, y, f) = f([x, y])
 
 E_avg(Xs, f) = [sum([f(xx) for xx in Xs[i]])/length(Xs[i]) for i = 1:size(Xs)[1]]
 
-M = 500
+M = 5000
 max_degree = 20
 ord = 2 #2b+3b, can access 3b only 
 body_order = :ThreeBody
@@ -26,7 +26,7 @@ distribution=Uniform
 
 domain_lower=-1
 domain_upper=1
-K_R = 4
+K_R = 2
 
 noise=0
 # noise=1e-4
@@ -57,29 +57,36 @@ A_pure = designMatNB(X, poly, max_degree, ord; body = body_order)
 sol_pure = solveLSQ(A_pure, Y; solver=solver)
 
 # prediction error 
-# predict two dist clusters
-XX_test = rand(distribution(domain_lower, domain_upper), (testSampleSize, 2))
-DD_test_pair = [[XX_test[i, :]] for i=1:testSampleSize]
+# predict two dist only clusters
+# XX_test = rand(distribution(domain_lower, domain_upper), (testSampleSize, 2))
+# DD_test = reduce(vcat, [XX_test[i, :] for i=1:testSampleSize]')
+# DD_test_pair = [[XX_test[i, :]] for i=1:testSampleSize]
 
-# predict larger cluster
-# K_R_test = K_R
-# DD_test = [rand(distribution(domain_lower, domain_upper), K_K_R_testR) for _=1:testSampleSize]
-# XX_test = reduce(vcat, DD_test') # data size M x K_R
-# DD_test_pair = permDist(DD_test, ord) # (testSampleSize x K_R*(K_R-1) x 2)
+# predict larger num of dist clusters
+K_R_test = K_R
+DD_test = [rand(distribution(domain_lower, domain_upper), K_R_test) for _=1:testSampleSize]
+XX_test = reduce(vcat, DD_test') # data size M x K_R
+DD_test_pair = permDist(DD_test, ord) # (testSampleSize x K_R*(K_R-1) x 2)
+DD_test = reduce(vcat, reduce(vcat, DD_test_pair'))
 
-Ep = Testing_func(DD_test_pair)
+ground_Ep = Testing_func(DD_test_pair)
 
-A_test = designMatNB(XX_test, poly, max_degree, ord; body = body_order)
+# A_test = designMatNB(XX_test, poly, max_degree, ord; body = body_order)
+A_test = predMatNB(DD_test, poly, max_degree, ord; body = body_order)
 yp = A_test * sol_pure
 
 # ground_yp = [f(DD_test_pair[i][j]) for i=1:testSampleSize, j=1:binomial(K_R,2)]
-ground_yp = [f(XX_test[i, :]) for i=1:testSampleSize]
+ground_yp = [f(DD_test[i, :]) for i=1:size(DD_test)[1]]
 
+A_test_energy = designMatNB(XX_test, poly, max_degree, ord; body = body_order)
+Ep = A_test_energy * sol_pure
+
+println("Max degree: $max_degree, K_R: $K_R")
 println("relative error of pure basis: ", norm(yp - ground_yp)/norm(ground_yp))
-println("RMSE: ", sqrt(norm(yp - ground_yp)/testSampleSize))
+println("RMSE: ", sqrt(norm(yp - ground_yp)/size(DD_test)[1]))
 
-println("relative error of E: ", norm(yp - Ep)/norm(Ep))
-println("RMSE of E: ", sqrt(norm(yp - Ep)/testSampleSize))
+println("relative error of E: ", norm(Ep - ground_Ep)/norm(ground_Ep))
+println("RMSE of E: ", sqrt(norm(Ep - ground_Ep)/testSampleSize))
 
 target_x = range(domain_lower, domain_upper, length=500)
 target_y = range(domain_lower, domain_upper, length=500)
