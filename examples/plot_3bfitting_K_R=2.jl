@@ -57,24 +57,21 @@ sol_pure = solveLSQ(A_pure, Y; solver=solver)
 
 # prediction error 
 # predict two dist only clusters
-# XX_test = rand(distribution(domain_lower, domain_upper), (testSampleSize, 2))
-# DD_test = reduce(vcat, [XX_test[i, :] for i=1:testSampleSize]')
-# DD_test_pair = [[XX_test[i, :]] for i=1:testSampleSize]
+XX_test = rand(distribution(domain_lower, domain_upper), (testSampleSize, 2))
+DD_test = reduce(vcat, [XX_test[i, :] for i=1:testSampleSize]')
+DD_test_pair = [[XX_test[i, :]] for i=1:testSampleSize]
 
 # predict larger num of dist clusters
-K_R_test = K_R
-DD_test = [rand(distribution(domain_lower, domain_upper), K_R_test) for _=1:testSampleSize]
-XX_test = reduce(vcat, DD_test') # data size M x K_R
-DD_test_pair = permDist(DD_test, ord) # (testSampleSize x K_R*(K_R-1) x 2)
-DD_test = reduce(vcat, reduce(vcat, DD_test_pair'))
+# K_R_test = K_R
+# DD_test = [rand(distribution(domain_lower, domain_upper), K_R_test) for _=1:testSampleSize]
+# XX_test = reduce(vcat, DD_test') # data size M x K_R
+# DD_test_pair = permDist(DD_test, ord) # (testSampleSize x K_R*(K_R-1) x 2)
+# DD_test = reduce(vcat, reduce(vcat, DD_test_pair'))
 
 ground_Ep = Testing_func(DD_test_pair)
 
-# A_test = designMatNB(XX_test, poly, max_degree, ord; body = body_order)
-
-# larger cluster
-# try scaling
-A_test = predMatNB(DD_test, poly, max_degree, ord; body = body_order)/ binomial(K_R_test, ord) # assume if we are fitting ord-body energy, we use the ord which makes sense
+A_test = designMatNB(XX_test, poly, max_degree, ord; body = body_order)
+# A_test = predMatNB(DD_test, poly, max_degree, ord; body = body_order)
 yp = A_test * sol_pure
 
 # ground_yp = [f(DD_test_pair[i][j]) for i=1:testSampleSize, j=1:binomial(K_R,2)]

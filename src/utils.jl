@@ -161,33 +161,35 @@ function designMatNB(train, poly_basis, max_deg, ord; body=:TwoBodyThreeBody)
 end
 
 function predMatNB(test, poly_basis, max_deg, ord; body=:TwoBodyThreeBody)
-   NN = get_NN(max_deg, ord)
-   NN2b = NN[length.(NN) .== 1]
-   NN3b = NN[length.(NN) .== 2]
-   M = length(test)
-
-   poly_list = poly_basis(test)
-
-   if body == :TwoBody # 2body interaction
-       return poly_list
-   elseif body == :ThreeBody #3body interaction
-       A_test = zeros(M, length(NN3b))
-       for i = eachindex(NN3b)
-           nn, mm = NN3b[i]
-           A_test[:, i] = sum([poly_list[:, nn] .* poly_list[:, mm]])
-       end
-   elseif body == :TwoBodyThreeBody #both 2b3b
-       A_test = zeros(M, length(NN))
-       A_test[:, 1:length(NN2b)] = poly_list
-       for i = eachindex(NN3b)
-           nn, mm = NN3b[i]
-           A_test[:, length(NN2b)+i] = sum([poly_list[:, nn] .* poly_list[:, mm]])
-       end
-   else
-       println("Does not support this body order.")
-   end
-   return A_test
-end
+    NN = get_NN(max_deg, ord)
+    NN2b = NN[length.(NN) .== 1]
+    NN3b = NN[length.(NN) .== 2]
+    M = size(test)[1]
+ 
+    if body == :TwoBody # 2body interaction
+        return poly_basis(test)
+    elseif body == :ThreeBody #3body interaction
+        @assert(size(test)[2] == 2)
+        poly_list = [poly_basis(test[:, i]) for i = 1:2]
+        A_test = zeros(M, length(NN3b))
+        for i = eachindex(NN3b)
+            nn, mm = NN3b[i]
+            A_test[:, i] = sum([poly_list[1][:, nn] .* poly_list[2][:, mm] for PX1 in poly_list])
+        end
+    elseif body == :TwoBodyThreeBody #both 2b3b
+        A_test = zeros(M, length(NN))
+        A_test[:, 1:length(NN2b)] = poly_basis.(test)
+        poly_list = [poly_basis(test[:, i]) for i = 1:2]
+        A_test = zeros(M, length(NN3b))
+        for i = eachindex(NN3b)
+            nn, mm = NN3b[i]
+            A_test[:, i] = sum([poly_list[1][:, nn] .* poly_list[2][:, mm] for PX1 in poly_list])
+        end
+    else
+        println("Does not support this body order.")
+    end
+    return A_test
+ end
 
 function solveLSQ(A_pure, Y; λ=0.1, solver=:qr)
    if solver == :qr
