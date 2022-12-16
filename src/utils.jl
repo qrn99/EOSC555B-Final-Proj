@@ -157,7 +157,7 @@ function designMatNB(train, poly_basis, max_deg, ord; body=:TwoBodyThreeBody)
    else
        println("Does not support this body order.")
    end
-   return A
+   return A / binomial(K_R, ord) # assume if we are fitting ord-body energy, we use the ord which makes sense
 end
 
 function predMatNB(test, poly_basis, max_deg, ord; body=:TwoBodyThreeBody)

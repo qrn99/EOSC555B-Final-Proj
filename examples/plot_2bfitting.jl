@@ -58,8 +58,7 @@ let fs=[f1, f2]
     #                     xp_pp_test = sort(collect(Iterators.flatten(test)))
                 #@show size(training_flatten)
                 xp_pp_test = range(domain_lower, domain_upper, length=testSampleSize)
-
-#                 basis = HelperFunctions.get_basis(basis_choice, BasisDeg, K_R, data_dst, dst; adaptedTrainSize=adaptedTrainSize)
+                basis = HelperFunctions.get_basis(basis_choice, BasisDeg, K_R, data_dst, dst; adaptedTrainSize=adaptedTrainSize)
                 
                 μ = HelperFunctions.lr(E, f, train, basis, N; noise=noise)
                 yp = HelperFunctions.predict(xp_pp_test, basis, μ)

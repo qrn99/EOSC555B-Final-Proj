@@ -17,7 +17,7 @@ f = f1_V2
 ord = 2 #2b+3b, can access 3b only 
 body_order = :ThreeBody
 
-testSampleSize=1000
+testSampleSize=20
 test_uniform=true
 adaptedTrainSize=testSampleSize
 distribution=Uniform
@@ -28,12 +28,12 @@ domain_upper=1
 noise=0
 # noise=1e-4
 
-# solver = :qr
+solver = :qr
 solver = :ard
 
 NN = [5, 10, 20]
 MM = 10*NN.^2
-K_Rs = [2, 3, 4, 8]
+K_Rs = [8, 9, 10]
 let
     f = f1_V2
     # f = f2_V2
@@ -54,13 +54,13 @@ let
             D = [rand(distribution(domain_lower, domain_upper), K_R) for _=1:M]
             X = reduce(vcat, D') # data size M x K_R
             D2 = permDist(D, ord) # generate ord needed distances pair
-
             J = size(D2[1])
             X_plot = reduce(hcat, reduce(hcat, D2))
 
             Y = Testing_func(D2)
-
+            
             A_pure = designMatNB(X, poly, max_degree, ord; body = body_order)
+            
             @show cond(A_pure)
 
             # get sol
@@ -83,7 +83,12 @@ let
             println("Max Basis Deg: $max_degree, K_R: $K_R")
             println("relative error of pure basis: ", Norm_diff/norm(ground_yp))
             println("RMSE: ", RMSE)
-
+            # println("Training error: ", norm((A_pure * sol_pure - Y))/ norm(Y))
+            # println("max sol pure: ", maximum(abs.(sol_pure)))
+            # println("max A pure: ", maximum(abs.(A_pure)))
+            # println("max pred: ", maximum(abs.(yp)))
+            # println("max ground: ", maximum(abs.(Ep)))
+            # println("mean ground: ", mean(Ep))
             println("relative error of E: ", norm(yp - Ep)/norm(Ep))
             println("RMSE of E: ", norm(yp - Ep)/sqrt(testSampleSize))
 
