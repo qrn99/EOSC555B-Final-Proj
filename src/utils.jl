@@ -416,8 +416,7 @@ function designMatNB2D(train, poly_basis, max_deg_poly, max_deg_exp, ord; body=:
                #@show (i-1) * length(NN_exp2b) + j
                pow = NN_exp2b[j] # actual power
                pp = pow .+ max_deg_exp .+ 1 # index in the exp_list
-               @show length([PX1[:, nn] for PX1 in poly_list])
-               A[:, (i-1) * length(NN_exp2b) + j] = sum([PX1[:, nn] for PX1 in poly_list])
+               A[:, (i-1) * length(NN_exp2b) + j] = sum([poly_list[p][:, nn] .* exp_list[p][:, pp] for p = 1:K_R ])
                push!(spec, [(nn[1], pp[1])])
            end
        end
@@ -428,7 +427,7 @@ function designMatNB2D(train, poly_basis, max_deg_poly, max_deg_exp, ord; body=:
            for j = 1:length(NN_exp3b)
                pow_pp, pow_qq = NN_exp3b[j]
                pp, qq = pow_pp .+ max_deg_exp .+ 1, pow_qq .+ max_deg_exp .+ 1 # index in the exp_list
-               A[:, (i-1) * length(NN_exp3b) + j] = sum([PX1[:, nn] .* PX2[:, mm] .* EX1[:, pp] .* EX2[:, qq] for PX1 in poly_list for PX2 in poly_list for EX1 in exp_list for EX2 in exp_list if (PX1 != PX2 && EX1 != EX2)])
+               A[:, (i-1) * length(NN_exp3b) + j] = sum([poly_list[p][:, nn] .* poly_list[q][:, mm] .* exp_list[p][:, pp] .* exp_list[q][:, qq] for p=1:K_R for q=1:K_R if (poly_list[p] != poly_list[q] || exp_list[p] != exp_list[q])])
                push!(spec, [(nn, pp), (mm, qq)])
            end
        end
@@ -439,7 +438,7 @@ function designMatNB2D(train, poly_basis, max_deg_poly, max_deg_exp, ord; body=:
         for j = 1:length(NN_exp2b)
             pow = NN_exp2b[j] # actual power
             pp = pow .+ max_deg_exp .+ 1 # index in the exp_list
-            A[:, (i-1) * length(NN_exp2b) + j] = sum([PX1[:, nn] .* EX1[:, pp]  for PX1 in poly_list for EX1 in exp_list])
+            A[:, (i-1) * length(NN_exp2b) + j] = sum([poly_list[p][:, nn] .* exp_list[p][:, pp] for p = 1:K_R ])
             push!(spec, [(nn[1], pp[1])])
         end
        end
@@ -448,7 +447,7 @@ function designMatNB2D(train, poly_basis, max_deg_poly, max_deg_exp, ord; body=:
         for j = 1:length(NN_exp3b)
             pow_pp, pow_qq = NN_exp3b[j]
             pp, qq = pow_pp .+ max_deg_exp .+ 1, pow_qq .+ max_deg_exp .+ 1 # index in the exp_list
-            A[:, length(NN2b) * length(NN_exp2b) + (i-1) * length(NN_exp3b) + j] = sum([PX1[:, nn] .* PX2[:, mm] .* EX1[:, pp] .* EX2[:, qq] for PX1 in poly_list for PX2 in poly_list for EX1 in exp_list for EX2 in exp_list if (PX1 != PX2 && EX1 != EX2)])
+            A[:, length(NN2b) * length(NN_exp2b) + (i-1) * length(NN_exp3b) + j] = sum([poly_list[p][:, nn] .* poly_list[q][:, mm] .* exp_list[p][:, pp] .* exp_list[q][:, qq] for p=1:K_R for q=1:K_R if (poly_list[p] != poly_list[q] || exp_list[p] != exp_list[q])])
             push!(spec, [(nn, pp), (mm, qq)])
         end
     end
