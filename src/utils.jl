@@ -183,7 +183,7 @@ function predMatNB(test, poly_basis, max_deg, ord; body=:TwoBodyThreeBody)
         A_test = zeros(M, length(NN3b))
         for i = eachindex(NN3b)
             nn, mm = NN3b[i]
-            A_test[:, i] = sum([poly_list[1][:, nn] .* poly_list[2][:, mm] for PX1 in poly_list])
+            A_test[:, i] = sum([poly_list[1][:, nn] .* poly_list[2][:, mm]])
         end
     else
         println("Does not support this body order.")
