@@ -5,15 +5,15 @@ using .HelperFunctions
 using LaTeXStrings, Interact
 
 ##
-f1(x) = abs(x)^3
-f2(x) = 1/(1+8*x^2)
-E(f, Rs::Vector{Vector{Float64}}) = [ sum(f.(R))/length(R) for R in Rs ]
+# f1(x) = abs(x)^3
+# f2(x) = 1/(1+8*x^2)
+# E(f, Rs::Vector{Vector{Float64}}) = [ sum(f.(R))/length(R) for R in Rs ]
 
-##
-# @manipulate for BasisDeg = [5, 10, 20, 40, 80],  M = [40, 80, 160, 200], 
-#     testSampleSize=[20, 50, 100], adaptedTrainSize=[100, 150, 200], 
-#     test_uniform=[false, true],
-#     rdf_bimodal = range(0.15, 0.3, 16), K_R = [1, 4, 16, 64], noise=[0.0, 1e-4, 1e-3] #, 1e-2, 1e-1]
+# ##
+# # @manipulate for BasisDeg = [5, 10, 20, 40, 80],  M = [40, 80, 160, 200], 
+# #     testSampleSize=[20, 50, 100], adaptedTrainSize=[100, 150, 200], 
+# #     test_uniform=[false, true],
+# #     rdf_bimodal = range(0.15, 0.3, 16), K_R = [1, 4, 16, 64], noise=[0.0, 1e-4, 1e-3] #, 1e-2, 1e-1]
 
 BasisDeg=20
 
@@ -59,7 +59,7 @@ let fs=[f1, f2]
                 #@show size(training_flatten)
                 xp_pp_test = range(domain_lower, domain_upper, length=testSampleSize)
 
-                basis = HelperFunctions.get_basis(basis_choice, BasisDeg, K_R, data_dst, dst; adaptedTrainSize=adaptedTrainSize)
+#                 basis = HelperFunctions.get_basis(basis_choice, BasisDeg, K_R, data_dst, dst; adaptedTrainSize=adaptedTrainSize)
                 
                 μ = HelperFunctions.lr(E, f, train, basis, N; noise=noise)
                 yp = HelperFunctions.predict(xp_pp_test, basis, μ)
