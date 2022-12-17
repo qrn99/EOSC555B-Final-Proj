@@ -160,22 +160,31 @@ function designMatNB(train, poly_basis, max_deg, ord; body=:TwoBodyThreeBody)
    return A / binomial(K_R, ord) # assume if we are fitting ord-body energy, we use the ord which makes sense
 end
 
+# TODO: Fix K_R>2 issue
 function predMatNB(test, poly_basis, max_deg, ord; body=:TwoBodyThreeBody)
     NN = get_NN(max_deg, ord)
     NN2b = NN[length.(NN) .== 1]
     NN3b = NN[length.(NN) .== 2]
-    M = size(test)[1]
+    M, K_R = size(test)
  
+    poly_list = [poly_basis(test[:, i]) for i = 1:K_R]
     if body == :TwoBody # 2body interaction
         return poly_basis(test)
     elseif body == :ThreeBody #3body interaction
-        @assert(size(test)[2] == 2)
-        poly_list = [poly_basis(test[:, i]) for i = 1:2]
+        @assert(K_R == 2)
+        poly_list = [poly_basis(test[:, i]) for i = 1:K_R]
         A_test = zeros(M, length(NN3b))
         for i = eachindex(NN3b)
             nn, mm = NN3b[i]
-            A_test[:, i] = sum([poly_list[1][:, nn] .* poly_list[2][:, mm] for PX1 in poly_list])
+            # @show(size(poly_list[1][:, nn]' .* poly_list[2][:, mm]'))
+            A_test[:, i] = poly_list[1][:, nn] .* poly_list[2][:, mm] + poly_list[1][:, mm] .* poly_list[2][:, nn]
+            # A_test[:, i] = sum([PX1[:, nn] .* PX2[:, mm] for PX1 in poly_list for PX2 in poly_list if PX1 != PX2])
         end
+        # A_test = zeros(M, length(NN3b))
+        # for i = eachindex(NN3b)
+        #     nn, mm = NN3b[i]
+        #     A_test[:, i] = sum([PX1[:, nn] .* PX2[:, mm] for PX1 in poly_list for PX2 in poly_list if PX1 != PX2])
+        # end
     elseif body == :TwoBodyThreeBody #both 2b3b
         A_test = zeros(M, length(NN))
         A_test[:, 1:length(NN2b)] = poly_basis.(test)
@@ -280,9 +289,6 @@ function pos_to_dist(pos, order)
    #      return dis
     end
 end
-# K_R = 3
-# num_sam = 100
-# X_3b = reduce(hcat, [pos_to_dist(gen_correlated_pos(Uniform(-10, 10), 3, K_R), 3) for _=1:num_sam])'
 
 function permDist(D, ord)
     DD = Vector[]

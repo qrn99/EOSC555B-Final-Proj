@@ -15,18 +15,18 @@ plot_2D(x, y, f) = f([x, y])
 
 E_avg(Xs, f) = [sum([f(xx) for xx in Xs[i]])/length(Xs[i]) for i = 1:size(Xs)[1]]
 
-M = 5000
-max_degree = 20
+M = 1000
+max_degree = 5
 ord = 2 #2b+3b, can access 3b only 
 body_order = :ThreeBody
 
-testSampleSize=1000
+testSampleSize=200
 test_uniform=true
 distribution=Uniform
 
 domain_lower=-1
 domain_upper=1
-K_R = 3
+K_R = 4
 noise=0
 # noise=1e-4
 
@@ -55,6 +55,10 @@ A_pure = designMatNB(X, poly, max_degree, ord; body = body_order)
 # get sol
 sol_pure = solveLSQ(A_pure, Y; solver=solver)
 
+println("Max degree: $max_degree, K_R: $K_R")
+println("train error: ", norm(A_pure*sol_pure - Y)/sqrt(M))
+
+
 # prediction error 
 # predict two dist only clusters
 # XX_test = rand(distribution(domain_lower, domain_upper), (testSampleSize, 2))
@@ -62,29 +66,27 @@ sol_pure = solveLSQ(A_pure, Y; solver=solver)
 # DD_test_pair = [[XX_test[i, :]] for i=1:testSampleSize]
 
 # predict larger num of dist clusters
-K_R_test = K_R
+K_R_test = 2
 DD_test = [rand(distribution(domain_lower, domain_upper), K_R_test) for _=1:testSampleSize]
 XX_test = reduce(vcat, DD_test') # data size M x K_R
 DD_test_pair = permDist(DD_test, ord) # (testSampleSize x K_R*(K_R-1) x 2)
 DD_test = reduce(vcat, reduce(vcat, DD_test_pair'))
 
 ground_Ep = Testing_func(DD_test_pair)
-
-# A_test = designMatNB(XX_test, poly, max_degree, ord; body = body_order)
+A_test_energy = designMatNB(XX_test, poly, max_degree, ord; body = body_order)
+Ep = A_test_energy * sol_pure
 
 # larger cluster
+# A_test = designMatNB(DD_test, poly, max_degree, ord; body = body_order)
+A_test = predMatNB(DD_test, poly, max_degree, ord; body = body_order) # assume if we are fitting ord-body energy, we use the ord which makes sense
 # try scaling
-A_test = predMatNB(DD_test, poly, max_degree, ord; body = body_order)/ binomial(K_R_test, ord) # assume if we are fitting ord-body energy, we use the ord which makes sense
+# A_test = A_test ./ binomial(K_R_test, ord)
 yp = A_test * sol_pure
 
 # ground_yp = [f(DD_test_pair[i][j]) for i=1:testSampleSize, j=1:binomial(K_R,2)]
 ground_yp = [f(DD_test[i, :]) for i=1:size(DD_test)[1]]
 
-A_test_energy = designMatNB(XX_test, poly, max_degree, ord; body = body_order)
-Ep = A_test_energy * sol_pure
-
-println("Max degree: $max_degree, K_R: $K_R")
-println("relative error of pure basis: ", norm(yp - ground_yp)/norm(ground_yp))
+println("relative error of prediction with K_R = $K_R_test: ", norm(yp - ground_yp)/norm(ground_yp))
 println("RMSE: ", sqrt(norm(yp - ground_yp)/size(DD_test)[1]))
 
 println("relative error of E: ", norm(Ep - ground_Ep)/norm(ground_Ep))
