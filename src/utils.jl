@@ -207,7 +207,13 @@ function predMatNB(test, poly_basis, max_deg, ord; body=:TwoBodyThreeBody)
     NN = get_NN(max_deg, ord)
     NN2b = NN[length.(NN) .== 1]
     NN3b = NN[length.(NN) .== 2]
-    M, K_R = size(test)
+
+    if length(size(test)) == 1
+        M = length(test)
+        K_R = 1
+    else
+        M, K_R = size(test)
+    end
  
     poly_list = [poly_basis(test[:, i]) for i = 1:K_R]
     if body == :TwoBody # 2body interaction
