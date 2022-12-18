@@ -53,7 +53,6 @@ let
             poly = legendre_basis(max_degree, normalize = true)
 
             X = rand(distribution(domain_lower, domain_upper), (M, K_R))
-            @show size(X)[2]
             Y = Testing_func(X) .+ noise
 
             A_pure = designMatNB(X, poly, max_degree, ord; body = body_order)
