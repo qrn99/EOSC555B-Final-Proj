@@ -32,15 +32,21 @@ K_R = 2
 noise=0
 # noise=1e-4
 
+# solver = :qr
 solver = :ard
-f_2b = f1
-f_3b = f2_V2
+
+# f_2b = f1
+f_2b = f2
+f_3b = f1_V2
+# f_3b = f2_V2
+
 Testing_func(X, D) = E_avg(X, f_2b) + E_avg_2D(D, f_3b)
 poly = legendre_basis(max_degree, normalize = true)
 
 X = rand(distribution(domain_lower, domain_upper), (M, K_R))
 D = [X[i, :] for i in 1:M]
 D2 = permDist(D, ord)
+X_plot = reduce(hcat, reduce(hcat, D2))
 Y = Testing_func(X, D2) .+ noise
 
 A_pure = designMatNB(X, poly, max_degree, ord; body = body_order)
@@ -52,10 +58,10 @@ sol_pure = solveLSQ(A_pure, Y; solver=solver)
 XX_test_2b = rand(distribution(domain_lower, domain_upper), (testSampleSize, 1))
 XX_test_2b = XX_test_2b[sortperm(XX_test_2b[:, 1]), :]
 
-# A_test_2b = predMatNB(XX_test_2b, poly, max_degree, ord; body = :TwoBody)
-A_test_2b = designMatNB(XX_test_2b, poly, max_degree, ord; body = :TwoBody)
+A_test_2b = designMatNB(XX_test_2b, poly, max_degree, 1; body = :TwoBody)
 yp_2b = A_test_2b * sol_pure[1:max_degree]
 ground_yp_2b = f_2b.(XX_test_2b)
+
 
 println("relative error for 2b: ", norm(yp_2b - ground_yp_2b)/norm(ground_yp_2b))
 println("RMSE for 2b: ", norm(yp_2b - ground_yp_2b)/sqrt(testSampleSize))
@@ -81,7 +87,7 @@ XX_test_3b = rand(distribution(domain_lower, domain_upper), (testSampleSize, 2))
 # DD_test2D = reduce(vcat, DD_test2D')
 # DD_test2D_plot = reduce(vcat, DD_test2D)
 
-A_test = designMatNB(XX_test_3b, poly, max_degree, ord; body = :ThreeBody)
+A_test = designMatNB(XX_test_3b, poly, max_degree, 2; body = :ThreeBody)
 
 yp_3b = A_test * sol_pure[max_degree+1:end]
 ground_yp_3b = [f_3b(XX_test_3b[i, :]) for i=1:testSampleSize]
@@ -103,5 +109,5 @@ p2 = plot(target_x, target_y, plot_V2, st=:surface,
 scatter!(X_plot[1, :], X_plot[2, :], plot_V2(X_plot[1, :], X_plot[2, :]), seriestype=:scatter, c=0, ms=0.5, label = "train")
 scatter!(XX_test_3b[:, 1], XX_test_3b[:, 2], yp_3b, seriestype=:scatter, c=2, ms=1, label = "prediction")
 
-p = plot(p1, p2, margin=10mm, plot_title="order=$body_order, solver=$solver, noise=$noise")
+p = plot(p1, p2, margin=10mm, size=(2000, 1500), legend=:outerbottom, plot_title="order=$body_order, solver=$solver, noise=$noise")
 ##
