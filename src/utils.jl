@@ -183,7 +183,7 @@ end
 
 """
     predMatNB(test, poly_basis, max_deg, ord; body=:TwoBodyThreeBody)
-    Returns the prediction basis matrix for $body interaction pair potential term
+    Returns the prediction basis matrix for _body_ interaction pair potential term
     
     * @param test           Vector{Vector{Vector(Float64)}}     set of atomic strucutres (1d) is array of array of radius distances pair tuple
     * @param poly_basis     OrthPolyBasis1D3T{Float64}          basis function
