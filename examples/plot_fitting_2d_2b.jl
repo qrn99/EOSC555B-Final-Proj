@@ -44,9 +44,11 @@ testSampleSize=50
 test_uniform=true
 distribution=Uniform
 
+# avoid using distance transform by restricting range
 domain_lower=-sqrt(2)/2
 domain_upper=sqrt(2)/2
-K_R = 3
+K_R = 10
+K_R_test = 4
 
 noise=0
 # noise=1e-4
@@ -68,7 +70,7 @@ sol_pure = solveLSQ(A_pure, Y; solver=solver)
 
 # XX_test = range(domain_lower, domain_upper, length=testSampleSize)
 
-XX_test = rand(distribution(domain_lower, domain_upper), (testSampleSize, K_R, 2))
+XX_test = rand(distribution(domain_lower, domain_upper), (testSampleSize, K_R_test, 2))
 #XX_test = XX_test[sortperm(XX_test[:, 1]), :]
 
 # XX_test_r1 = sort(rand(distribution(domain_lower, domain_upper), M))
