@@ -11,7 +11,8 @@ mkpath(exp_dir)
 f1(x) = 1/(1+8*x^2)
 f2(x) = abs(x)^3
 # E_avg(X, f) = sum([f.(X[:, i]) for i = 1:size(X)[2]])
-E_avg(X, f) = sum([f.(X[:, i])/length(size(X)[2]) for i = 1:size(X)[2]])
+# E_avg(X, f) = sum([f.(X[:, i])/length(size(X)[2]) for i = 1:size(X)[2]])
+E_avg(X, f) = mean([f.(X[:, i]) for i = 1:size(X)[2]])
 
 f = f1
 
@@ -52,17 +53,20 @@ let
             poly = legendre_basis(max_degree, normalize = true)
 
             X = rand(distribution(domain_lower, domain_upper), (M, K_R))
+            @show size(X)[2]
             Y = Testing_func(X) .+ noise
 
             A_pure = designMatNB(X, poly, max_degree, ord; body = body_order)
-
             sol_pure = solveLSQ(A_pure, Y; solver=solver)
-                    
-            XX_test = range(domain_lower, domain_upper, length=testSampleSize)
+            XX_test = reshape(range(domain_lower, domain_upper, length=testSampleSize), (testSampleSize, 1))
+            #XX_test = rand(distribution(domain_lower, domain_upper), (testSampleSize, 1))
+                   
+            
 
-            A_test = predMatNB(XX_test, poly, max_degree, ord; body = body_order)
+            A_test = designMatNB(XX_test, poly, max_degree, ord; body = body_order)
+
             yp = A_test * sol_pure
-            ground_yp = f.(XX_test)
+            ground_yp = Testing_func(XX_test)
             RMSE = norm(yp - ground_yp)/sqrt(M)
 
             println("Max Basis Deg: $max_degree")
