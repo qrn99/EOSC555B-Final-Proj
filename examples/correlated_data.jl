@@ -1,6 +1,29 @@
 include("../src/utils.jl")
+include("../src/HelperFunctions.jl")
 
 using JuLIP, StaticArrays
+using .HelperFunctions
+
+r_in = -1
+r_cut = 1
+rdf_bimodal = 0.3
+
+data_dst = HelperFunctions.generate_data_dst(rdf_bimodal, r_in, r_cut, -1, 1)
+plots = []  
+push!(plots, histogram(rand(1000)*(r_cut-r_in) .+ r_in, bins = 20, title="uniform dist", label="", xlabel="r", ylabel="bins"))
+
+Random.seed!(12216859)
+for each in keys(data_dst)
+    push!(plots, histogram(rand(data_dst[each], 1000), bins = 20, title="$each dist", label="", size=(200, 200),  xlabel="r", ylabel="bins"))
+end
+
+exp_dir = "results/data_dst/" # result saving dir
+mkpath(exp_dir)
+l = @layout [grid(1, 4)]
+plt = plot(plots..., layout = l, size=(1000, 250), margin=5mm)
+savefig(plt, exp_dir*"/4_data_dst")
+plt
+
 function gen_correlated_pos(dst, dim, num_of_atoms)
     result = [rand(dst, dim) for _=1:num_of_atoms]
     return result
