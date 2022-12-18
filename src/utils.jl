@@ -125,6 +125,27 @@ function rand_radial(poly, N)
    end
 end
 
+"""
+    designMatNB(train, poly_basis, max_deg, ord; body=:TwoBodyThreeBody)
+    Returns the design matrix for averaged estimation 1D model
+    
+    * @param train          Vector{Vector{Vector(Float64)}}     set of atomic strucutres (1d) is array of array of radius distances
+    * @param poly_basis     OrthPolyBasis1D3T{Float64}          basis function
+    * @param max_deg        Int64                               maximum degree of poly basis function
+    * @param body           Int64                               body order
+    * @return               Matrix{ComplexF64}                  design matrix
+
+    # Examples
+    ```jldoctest
+    num_sam = 10
+    K_R = 4
+    train = rand(num_sam, K_R)
+    poly_basis = chebyshev_basis(10)
+    max_deg = 5
+    ord = 2
+    A = designMatNB2D(train, poly_basis, max_deg, ord; body=:TwoBodyThreeBody)
+    ```
+"""
 function designMatNB(train, poly_basis, max_deg, ord; body=:TwoBodyThreeBody)
    NN = get_NN(max_deg, ord)
    NN2b = NN[length.(NN) .== 1]
@@ -160,6 +181,27 @@ function designMatNB(train, poly_basis, max_deg, ord; body=:TwoBodyThreeBody)
    return A / binomial(K_R, ord) # assume if we are fitting ord-body energy, we use the ord which makes sense
 end
 
+"""
+    predMatNB(test, poly_basis, max_deg, ord; body=:TwoBodyThreeBody)
+    Returns the prediction basis matrix for $body interaction pair potential term
+    
+    * @param test           Vector{Vector{Vector(Float64)}}     set of atomic strucutres (1d) is array of array of radius distances pair tuple
+    * @param poly_basis     OrthPolyBasis1D3T{Float64}          basis function
+    * @param max_deg        Int64                               maximum degree of poly basis function
+    * @param body           Int64                               body order
+    * @return               Matrix{ComplexF64}                  basis matrix
+
+    # Examples
+    ```jldoctest
+    testSampleSize = 10
+    K_R_test = 2
+    DD_test = [rand(distribution(-1, 1), K_R_test) for _=1:testSampleSize]
+    XX_test = reduce(vcat, DD_test')
+    DD_test_pair = permDist(DD_test, ord)
+    DD_test = reduce(vcat, reduce(vcat, DD_test_pair'))
+    A_test = predMatNB(DD_test, poly, max_degree, ord; body = body_order)
+    ```
+"""
 # TODO: Fix K_R>2 issue
 function predMatNB(test, poly_basis, max_deg, ord; body=:TwoBodyThreeBody)
     NN = get_NN(max_deg, ord)
@@ -200,6 +242,16 @@ function predMatNB(test, poly_basis, max_deg, ord; body=:TwoBodyThreeBody)
     return A_test
  end
 
+"""
+    solveLSQ(A_pure, Y; λ=0.1, solver=:qr)
+    Returns the paraemter solution of a linear least square problem
+
+    * @param A_pure         Matrix{ComplexF64}      design matrix
+    * @param Y              Vector{ComplexF64}      target value
+    * @keywordparam λ       Int64                   L2 regularizer coefficient
+    * @keywordparam solver  :qr or :ard             QR solver or ARD solver
+    * @return               Vector{ComplexF64}      parameters θ
+"""
 function solveLSQ(A_pure, Y; λ=0.1, solver=:qr)
    if solver == :qr
       # solve the problem with qr
@@ -290,6 +342,13 @@ function pos_to_dist(pos, order)
     end
 end
 
+"""
+This function converts an array of radius distances to ord pair radius distance vectors based on body interaction order
+
+param: D :: Vector{Vector{Float64}}, array of raidus distances
+param: ord :: Int{2, 3}, body interaction order
+return: DD :: Vector{Vector{Float64}}, radius distance vector between #order body atomic interaction
+"""
 function permDist(D, ord)
     DD = Vector[]
     if ord == 1
