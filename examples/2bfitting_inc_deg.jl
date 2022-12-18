@@ -5,6 +5,9 @@ using .HelperFunctions
 using LaTeXStrings, Interact
 using PyCall
 
+exp_dir = "results/2b1Dfitting/" # result saving dir
+mkpath(exp_dir)
+
 f1(x) = 1/(1+8*x^2)
 f2(x) = abs(x)^3
 # E_avg(X, f) = sum([f.(X[:, i]) for i = 1:size(X)[2]])
@@ -84,7 +87,9 @@ let
     end
     l = @layout [grid(length(K_Rs), length(NN)+1)]
         
-    plot(plots..., layout = l, size=(2500, 1000), margin=10mm, plot_title="order=$ord, solver=$solver, noise=$noise, test_uniform=$test_uniform")
+    plt = plot(plots..., layout = l, size=(2500, 1000), margin=10mm, plot_title="order=$ord, solver=$solver, noise=$noise, test_uniform=$test_uniform")
+    savefig(plt, exp_dir*"/inc_deg_[" * string(NN[1]) * "," * string(NN[end]) * "]" * "_K_R=[" * string(K_Rs[1]) * "," * string(K_Rs[end]) * "]")
+    plt
 end
 
 
