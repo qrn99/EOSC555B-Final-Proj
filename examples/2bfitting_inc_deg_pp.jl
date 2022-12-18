@@ -6,7 +6,7 @@ using LaTeXStrings, Interact
 using PyCall
 
 #save plot
-exp_dir = "results/2b1Dfitting/" # result saving dir
+exp_dir = "results/2b1dfitting/" # result saving dir
 mkpath(exp_dir)
 
 r_in = 0.85 # with envelope should be 0.0
@@ -37,7 +37,7 @@ env(r) = (r^(-p) - r_cut^(-p) + p * r_cut^(-p-1) * (r - r_cut)) * (r < r_cut)
 f1(x) = 1/(1+8*x^2)
 f2(x) = abs(x)^3
 # E_avg(X, f) = sum([f.(X[:, i]) for i = 1:size(X)[2]])
-E_avg(X, f) = sum([f.(X[:, i])/length(size(X)[2]) for i = 1:size(X)[2]])
+E_avg(X, f) = mean([f.(X[:, i]) for i = 1:size(X)[2]])
 
 f = ϕ
 
