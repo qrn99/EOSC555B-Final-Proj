@@ -475,10 +475,12 @@ function designMatNB2D(train, poly_basis, max_deg_poly, max_deg_exp, ord; body=:
    NN_exp2b, NN_exp3b = get_NN_exp(max_deg_exp, rotationInv)
    M, K_R, _ = size(train)
    xs_rad = spatial2rad(train) # num_data × K_R × 2
+   @show [maximum(xs_rad[:,i,1]) for i = 1:K_R]
+   @show maximum(poly_basis(xs_rad[:,1,1]))
    poly_list = [poly_basis(xs_rad[:, i, 1]) for i = 1:K_R] #  K_R × num_data × length(poly_basis) 
    exp_list = [exp_basis(xs_rad[:, i, 2], max_deg_exp) for i = 1:K_R] #  K_R × num_data × max_deg_exp
    spec = []
-
+   @show maximum(poly_list[1])
    
    if body == :TwoBody # 2body interaction
         A = zeros(ComplexF64, M, length(NN2b) * length(NN_exp2b))
@@ -527,6 +529,6 @@ function designMatNB2D(train, poly_basis, max_deg_poly, max_deg_exp, ord; body=:
    else
        println("Does not support this body order.")
    end
-   
-   return real(A) / K_R, spec
+   @show maximum(real(A))
+   return real(A) / binomial(K_R, ord), spec
 end
