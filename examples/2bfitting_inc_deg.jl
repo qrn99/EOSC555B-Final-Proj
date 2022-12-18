@@ -5,7 +5,7 @@ using .HelperFunctions
 using LaTeXStrings, Interact
 using PyCall
 
-exp_dir = "results/2b1Dfitting/" # result saving dir
+exp_dir = "results/2b1dfitting/" # result saving dir
 mkpath(exp_dir)
 
 f1(x) = 1/(1+8*x^2)
