@@ -3,16 +3,19 @@ include("../src/utils.jl")
 
 using .HelperFunctions
 using LaTeXStrings, Interact, PyCall
+
+exp_dir = "results/2b3b1dfitting/" # result saving dir
+mkpath(exp_dir)
+
 ##
 f1(x) = 1/(1+8*x^2)
 f2(x) = abs(x)^3
-# E_avg(X, f) = sum([f.(X[:, i]) for i = 1:size(X)[2]])
-E_avg(X, f) = sum([f.(X[:, i])/length(size(X)[2]) for i = 1:size(X)[2]])
+E_avg(X, f) = mean([f.(X[:, i]) for i = 1:size(X)[2]])
 
 f1_V2(xx) = xx[1]^2 + xx[2]^2
 f2_V2(xx) = xx[1]^2 - 10 * cos(2*pi*xx[2]^2)
 plot_2D(x, y, f) = f([x, y]) 
-E_avg_2D(Xs, f) = [sum([f(xx) for xx in Xs[i]])/length(Xs[i]) for i = 1:size(Xs)[1]]
+E_avg_2D(Xs, f) = [mean([f(xx) for xx in Xs[i]]) for i = 1:size(Xs)[1]]
 
 ##
 M = 500
@@ -110,4 +113,6 @@ scatter!(X_plot[1, :], X_plot[2, :], plot_V2(X_plot[1, :], X_plot[2, :]), series
 scatter!(XX_test_3b[:, 1], XX_test_3b[:, 2], yp_3b, seriestype=:scatter, c=2, ms=1, label = "prediction")
 
 p = plot(p1, p2, margin=10mm, size=(2000, 1500), legend=:outerbottom, plot_title="order=$body_order, solver=$solver, noise=$noise")
+savefig(p, exp_dir*"/2b3bfitting_f2b_" * string(f_2b) * "_f3b_" * string(f_3b))
+p
 ##
