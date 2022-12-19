@@ -20,7 +20,7 @@ f = f1_V2
 ord = 2 #2b+3b, can access 3b only 
 body_order = :ThreeBody
 
-testSampleSize=400
+testSampleSize=200
 test_uniform=true
 adaptedTrainSize=testSampleSize
 distribution=Uniform
@@ -31,14 +31,14 @@ domain_upper=1
 noise=0
 # noise=1e-4
 
-solver = :qr
+# solver = :qr
 solver = :ard
 
 # NN = [5, 8, 10, 15, 20, 30]
-NN = [5]
-MM =100*NN.^2
-# K_Rs = [3, 6, 12]
-K_Rs = [3]
+NN = [5, 10, 20]
+MM = 100*NN.^2
+K_Rs = [3, 6, 12]
+# K_Rs = [3]
 let
     f = f1_V2
     # f = f2_V2
@@ -50,7 +50,7 @@ let
         P = plot(xaxis  = (:log, "sample size", ),
                             yaxis  = (:log, "RMSE"), 
                             legend = :outerbottomright, 
-                            size = (300, 100))
+                            size = (600, 500))
         for t = eachindex(NN)
             M = MM[t]
             max_degree = NN[t]
@@ -110,7 +110,7 @@ let
                     size = (600, 500),
                     alpha = 0.5,
                     label = "target", xlabel="x1", ylabel="x2", zlabel="V2(x1, x2)", title="basis maxdeg = $max_degree, sample size = $M, K_R=$K_R")
-            scatter!(X_plot[1, :], X_plot[2, :], plot_V2(X_plot[1, :], X_plot[2, :]), seriestype=:scatter, c=0, ms=1, label = "train")
+            # scatter!(X_plot[1, :], X_plot[2, :], plot_V2(X_plot[1, :], X_plot[2, :]), seriestype=:scatter, c=0, ms=1, label = "train")
             test_plot = reduce(hcat, reduce(hcat, DD_test_pair))'
             scatter!(test_plot[:, 1], test_plot[:, 2], yp, seriestype=:scatter, c=2, ms=4, label = "predict")
             push!(plots, p)
@@ -121,7 +121,7 @@ let
     l = @layout [grid(length(K_Rs), length(NN)+1)]
         
     plt = plot(plots..., layout = l, 
-                size=(2500, 1000), 
+                size=(4000, 1500), 
                 margin=8mm, plot_title="order=$ord, solver=$solver, noise=$noise, test_uniform=$test_uniform")
     savefig(plt, exp_dir*"/3b1d_inc_deg_[" * string(NN[1]) * "," * string(NN[end]) * "]" * "_K_R=[" * string(K_Rs[1]) * "," * string(K_Rs[end]) * "]_pic")
     plt
