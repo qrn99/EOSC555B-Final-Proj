@@ -5,6 +5,9 @@ using .HelperFunctions
 using LaTeXStrings, Interact
 using PyCall
 
+exp_dir = "results/3b1dfitting/" # result saving dir
+mkpath(exp_dir)
+
 f1_V2(xx) = xx[1]^2 + xx[2]^2
 f2_V2(xx) = xx[1]^2 - 10 * cos(2*pi*xx[2]^2)
 plot_2D(x, y, f) = f([x, y]) 
@@ -17,7 +20,7 @@ f = f1_V2
 ord = 2 #2b+3b, can access 3b only 
 body_order = :ThreeBody
 
-testSampleSize=20
+testSampleSize=400
 test_uniform=true
 adaptedTrainSize=testSampleSize
 distribution=Uniform
@@ -32,8 +35,8 @@ solver = :qr
 solver = :ard
 
 NN = [5, 10, 20]
-MM = 10*NN.^2
-K_Rs = [8, 9, 10]
+MM = NN.^2
+K_Rs = [3, 6, 12]
 let
     f = f1_V2
     # f = f2_V2
@@ -116,9 +119,11 @@ let
     end
     l = @layout [grid(length(K_Rs), length(NN)+1)]
         
-    plot(plots..., layout = l, 
-    size=(2500, 1000), 
-    margin=10mm, plot_title="order=$ord, solver=$solver, noise=$noise, test_uniform=$test_uniform")
+    plt = plot(plots..., layout = l, 
+                size=(2500, 1000), 
+                margin=10mm, plot_title="order=$ord, solver=$solver, noise=$noise, test_uniform=$test_uniform")
+    savefig(plt, exp_dir*"/3b1d_inc_deg_[" * string(NN[1]) * "," * string(NN[end]) * "]" * "_K_R=[" * string(K_Rs[1]) * "," * string(K_Rs[end]) * "]")
+    plt
 end
 
 
