@@ -30,7 +30,7 @@ distribution=Uniform
 
 domain_lower=-1
 domain_upper=1
-K_R = 2
+K_R = 3
 
 noise=0
 # noise=1e-4
@@ -102,17 +102,26 @@ target_x = range(domain_lower, domain_upper, length=500)
 target_y = range(domain_lower, domain_upper, length=500)
 plot_V2(x, y) = plot_2D.(x, y, f_3b)
 
-plotly();
-p2 = plot(target_x, target_y, plot_V2, st=:surface, 
-        legend = :outerbottomright,
-        # xlim=[-1.1, 1.1], ylim=[-1, 2],
-        # size = (1000, 800),
-        alpha = 0.5,
-        label = "target", xlabel="x", ylabel="f(x)", title="")
-scatter!(X_plot[1, :], X_plot[2, :], plot_V2(X_plot[1, :], X_plot[2, :]), seriestype=:scatter, c=0, ms=0.5, label = "train")
-scatter!(XX_test_3b[:, 1], XX_test_3b[:, 2], yp_3b, seriestype=:scatter, c=2, ms=1, label = "prediction")
+# plotly();
+# p2 = plot(target_x, target_y, plot_V2, st=:surface, 
+#         legend = :outerbottomright,
+#         # xlim=[-1.1, 1.1], ylim=[-1, 2],
+#         # size = (1000, 800),
+#         alpha = 0.5,
+#         label = "target", xlabel="x", ylabel="f(x)", title="")
+# scatter!(X_plot[1, :], X_plot[2, :], plot_V2(X_plot[1, :], X_plot[2, :]), seriestype=:scatter, c=0, ms=0.5, label = "train")
+# scatter!(XX_test_3b[:, 1], XX_test_3b[:, 2], yp_3b, seriestype=:scatter, c=2, ms=1, label = "prediction")
 
-p = plot(p1, p2, margin=10mm, size=(2000, 1500), legend=:outerbottom, plot_title="order=$body_order, solver=$solver, noise=$noise")
+p2 = plot(target_x, target_y, plot_V2, st=:surface, 
+                    legend = :bottomleft,
+                    # xlim=[-1.1, 1.1], ylim=[-1, 2],
+                    size = (600, 500),
+                    alpha = 0.5,
+                    label = "target", xlabel="x1", ylabel="x2", zlabel="V2(x1, x2)", title="basis maxdeg = $max_degree, sample size = $M, K_R=$K_R")
+scatter!(X_plot[1, :], X_plot[2, :], plot_V2(X_plot[1, :], X_plot[2, :]), seriestype=:scatter, c=0, ms=1, label = "train")
+scatter!(XX_test_3b[:, 1], XX_test_3b[:, 2], yp_3b, seriestype=:scatter, c=2, ms=4, label = "predict")
+
+p = plot(p1, p2, margin=10mm, size=(2000, 1000), legend=:outerbottom, plot_title="order=$body_order, solver=$solver, noise=$noise")
 savefig(p, exp_dir*"/2b3bfitting_f2b_" * string(f_2b) * "_f3b_" * string(f_3b))
 p
 ##
