@@ -5,6 +5,9 @@ using .HelperFunctions
 using LaTeXStrings, Interact
 using PyCall
 
+exp_dir = "results/3b1dfitting/" # result saving dir
+mkpath(exp_dir)
+
 f1(x) = 1/(1+8*x^2)
 f2(x) = abs(x)^3
 
@@ -15,7 +18,7 @@ plot_2D(x, y, f) = f([x, y])
 
 E_avg(Xs, f) = [sum([f(xx) for xx in Xs[i]])/length(Xs[i]) for i = 1:size(Xs)[1]]
 
-M = 1000
+M = 500
 max_degree = 5
 ord = 2 #2b+3b, can access 3b only 
 body_order = :ThreeBody
@@ -26,7 +29,7 @@ distribution=Uniform
 
 domain_lower=-1
 domain_upper=1
-K_R = 4
+K_R = 3
 noise=0
 # noise=1e-4
 
@@ -106,5 +109,6 @@ p = plot(target_x, target_y, plot_V2, st=:surface,
 scatter!(X_plot[1, :], X_plot[2, :], plot_V2(X_plot[1, :], X_plot[2, :]), seriestype=:scatter, c=0, ms=1, label = "train")
 test_plot = reduce(hcat, reduce(hcat, DD_test_pair))'
 scatter!(test_plot[:, 1], test_plot[:, 2], yp, seriestype=:scatter, c=2, ms=4, label = "predict")
+savefig(p, exp_dir*"/3b1d_prediction_plot_K_R=$K_R")
 p
 
