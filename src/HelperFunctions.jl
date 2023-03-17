@@ -15,7 +15,7 @@ export cheb, legendre, design_matrix, get_basis, generate_data, generate_data_ds
 
 # polynomail construction of degree N, output is [P₀, ..., Pₙ]
 cheb(N) = chebyshev_basis(N)
-legendre(N) = legendre_basis(N, normalize=true) 
+legendre(N) = legendre_basis(N, normalize=true)
 
 """
     design_matrix(xs, basis, N)
@@ -36,7 +36,7 @@ legendre(N) = legendre_basis(N, normalize=true)
 function design_matrix(xs, basis, N)
     A = zeros(ComplexF64, length(xs), N)
     for (i, xx) in enumerate(xs)
-      A[i, :] = sum(evaluate(basis, x) for x in xx) / length(xx)
+      A[i, :] = sum(evaluate(basis, x) for x in xx) / sqrt(length(xx))
     end 
     return A
 end
@@ -69,6 +69,8 @@ end
 function lr(averge_est_fnc, target_fnc, train, basis, N; noise=0.0)
     Y = averge_est_fnc(target_fnc, train) .+ noise
     Ψ = design_matrix(train, basis, N)
+    # remove constant functions
+    # Ψ = design_matrix(train, basis, N)[:,2]
     Q,R = qr(Ψ)
     #implement QR factorization
     μ = R \ (Matrix(Q)'*Y)
@@ -96,9 +98,11 @@ end
     ```
 """
 function predict(r::Float64, basis, μ)
-   B = evaluate(basis, r)
-   val = real(sum(μ .* B))
-   return val
+    B = evaluate(basis, r)
+    # remove constnat functions pred
+    # B = evaluate(basis, r)[2:end]
+    val = real(sum(μ .* B))
+    return val
 end
 
 """
@@ -227,12 +231,12 @@ end
     ```jldoctest
     julia> data_dst = generate_data_dst(0.3, -1, 1, -1, 1)
     julia> dst = "uniform"
-    julia> get_basis("OrthPoly", 5, 2, data_dst, dst)
+    julia> get_basis("orthpoly", 5, 2, data_dst, dst)
     OrthPolyBasis1D3T{Float64}(..., Dict{String, Any}("weights" => DiscreteWeights{Float64}(...)
     ```
 """
 function get_basis(basis_choice, N, K_R, data_dst, dst; adaptedTrainSize=100, testSampleSize=100)
-    if basis_choice == "OrthPoly"
+    if basis_choice == "orthpoly"
         train_orth, _ = generate_data(adaptedTrainSize, K_R, testSampleSize, data_dst, dst)
         rdf = vcat(train_orth...)
         W = DiscreteWeights(vcat(rdf), ones(length(rdf)), :normalize)
@@ -265,7 +269,7 @@ end
     julia> MM=[40, 80, 160]; NN = [20 for _ in 1:length(MM)]; K_R = 2
     julia> data_dst = generate_data_dst(0.3, -1, 1, -1, 1)
     julia> dst = "uniform"
-    julia> basis = get_basis("OrthPoly", NN[1], K_R, data_dst, dst)
+    julia> basis = get_basis("orthpoly", NN[1], K_R, data_dst, dst)
     julia> f1(x) = abs(x)^3
     julia> E(f, Rs::Vector{Vector{Float64}}) = [ sum(f.(R))/length(R) for R in Rs ]
     julia> LSQ_error(NN, MM, K_R, 100, f1, E, basis, data_dst, dst)
@@ -323,7 +327,7 @@ end
     julia> NN = [20, 40, 60]; MM= NN.^2; K_R = 2
     julia> data_dst = generate_data_dst(0.3, -1, 1, -1, 1)
     julia> dst = "uniform"
-    julia> basis_choice = "OrthPoly"
+    julia> basis_choice = "orthpoly"
     julia> f1(x) = abs(x)^3
     julia> E(f, Rs::Vector{Vector{Float64}}) = [ sum(f.(R))/length(R) for R in Rs ]
     julia> LSQ_error_deg(NN, MM, K_R, 100, f1, E, basis_choice, data_dst, dst)
@@ -519,7 +523,7 @@ function predict_bayes(r::Float64, basis, μ, Σ_inv, β_inv)
     julia> MM=[40, 80, 160]; NN = [20 for _ in 1:length(MM)]; K_R = 2
     julia> data_dst = generate_data_dst(0.3, -1, 1, -1, 1)
     julia> dst = "uniform"
-    julia> basis = get_basis("OrthPoly", NN[1], K_R, data_dst, dst)
+    julia> basis = get_basis("orthpoly", NN[1], K_R, data_dst, dst)
     julia> f1(x) = abs(x)^3
     julia> E(f, Rs::Vector{Vector{Float64}}) = [ sum(f.(R))/length(R) for R in Rs ]
     julia> brr_error(NN, MM, K_R, 100, f1, E, basis, data_dst, dst)
@@ -582,7 +586,7 @@ end
     julia> NN = [20, 40, 60]; MM= NN.^2; K_R = 2
     julia> data_dst = generate_data_dst(0.3, -1, 1, -1, 1)
     julia> dst = "uniform"
-    julia> basis_choice = "OrthPoly"
+    julia> basis_choice = "orthpoly"
     julia> f1(x) = abs(x)^3
     julia> E(f, Rs::Vector{Vector{Float64}}) = [ sum(f.(R))/length(R) for R in Rs ]
     julia> brr_error_deg(NN, MM, K_R, 100, f1, E, basis_choice, data_dst, dst)
@@ -651,7 +655,7 @@ env(r) = (r^(-p) - r_cut^(-p) + p * r_cut^(-p-1) * (r - r_cut)) * (r < r_cut)
 function _design_matrix_pp(rs, basis, N)
     A = zeros(ComplexF64, length(rs), N)
     for (i, rr) in enumerate(rs)
-      A[i, :] = sum(evaluate(basis, x(r)) * env(r) for r in rr) / length(rr)
+      A[i, :] = sum(evaluate(basis, x(r)) * env(r) for r in rr) / sqrt(length(rr))
     end 
     return A
 end
