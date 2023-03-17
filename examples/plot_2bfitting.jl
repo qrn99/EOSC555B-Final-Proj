@@ -19,7 +19,7 @@ mkpath(exp_dir)
 BasisDeg=20
 
 num_data = 1000
-K_1 = 5
+K_1 = 4
 
 M = floor(num_data / K_1)
 
@@ -29,10 +29,12 @@ adaptedTrainSize=testSampleSize
 
 domain_lower=-1
 domain_upper=1
-noise=1e-4
+# noise=1e-4
+noise=0
 
 let fs=[f1, f2]
 # let fs=[f2]
+# let fs=[f1]
     N = BasisDeg
 
     # Add poly when pack has it
@@ -78,7 +80,7 @@ let fs=[f1, f2]
     l = @layout [grid(length(fs)+length(basis_choices)+2, length(distributions))]
     PL = plot(plots..., layout = l, margin = 5mm, size=(2600, 1500))
     # plot_title="J=$BasisDeg, K_1 = $K_1, noise=$noise, test_uniform=$test_uniform"
-    savefig(PL, exp_dir*"2b_basic_with_train_plots"*"_J=$BasisDeg"*"_K_1=$K_1"*"_test_uniform=$test_uniform"*"_f=$fs")
+    savefig(PL, exp_dir*"2b_basic_with_train_plots"*"_J=$BasisDeg"*"_K_1=$K_1"*"_test_uniform=$test_uniform"*"_f="*string(fs))
     # savefig(PL, exp_dir*"2b_basic_plots_KN=" * string(K_1)*"f=$fs")
 end
 
