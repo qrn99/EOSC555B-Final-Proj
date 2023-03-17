@@ -14,14 +14,14 @@ mkpath(exp_dir)
 # # @manipulate for BasisDeg = [5, 10, 20, 40, 80],  M = [40, 80, 160, 200], 
 # #     testSampleSize=[20, 50, 100], adaptedTrainSize=[100, 150, 200], 
 # #     test_uniform=[false, true],
-# #     rdf_bimodal = range(0.15, 0.3, 16), K_N = [1, 4, 16, 64], noise=[0.0, 1e-4, 1e-3] #, 1e-2, 1e-1]
+# #     rdf_bimodal = range(0.15, 0.3, 16), K_1 = [1, 4, 16, 64], noise=[0.0, 1e-4, 1e-3] #, 1e-2, 1e-1]
 
 BasisDeg=20
 
 num_data = 1000
-K_N = 5
+K_1 = 5
 
-M = floor(num_data / K_N)
+M = floor(num_data / K_1)
 
 testSampleSize=400
 test_uniform=true
@@ -47,26 +47,26 @@ let fs=[f1, f2]
 
     Random.seed!(12216859)
     for each in keys(data_dst)
-        push!(plots, histogram(rand(data_dst[each], 1000), bins = 20, title="$each Dist", legend = false))
+        push!(plots, histogram(rand(data_dst[each], 1000), bins = 20, title="$each distribtuion", legend = false))
     end
 
     for f in fs
         for basis_choice in basis_choices
             for dst in distributions 
-                train, test = HelperFunctions.generate_data(M, K_N, testSampleSize, data_dst, dst)
+                train, test = HelperFunctions.generate_data(M, K_1, testSampleSize, data_dst, dst)
                 # @show size(train)
                 training_flatten = sort(collect(Iterators.flatten(train)))
     #                     xp_pp_test = sort(collect(Iterators.flatten(test)))
                 #@show size(training_flatten)
                 xp_pp_test = range(domain_lower, domain_upper, length=testSampleSize)
-                basis = HelperFunctions.get_basis(basis_choice, BasisDeg, K_N, data_dst, dst; adaptedTrainSize=adaptedTrainSize)
+                basis = HelperFunctions.get_basis(basis_choice, BasisDeg, K_1, data_dst, dst; adaptedTrainSize=adaptedTrainSize)
                 
                 μ = HelperFunctions.lr(E, f, train, basis, N; noise=noise)
                 yp = HelperFunctions.predict(xp_pp_test, basis, μ)
                 target_x = range(-1, 1, length=200)
                 p = plot(target_x, f.(target_x), c=1, lw=2,
     #                         xlim=[-1.1, 1.1], ylim=[-1, 2],
-                    label = "target", xlabel="x", ylabel="f(x)", title="$basis_choice with $dst distribtuion")
+                    label = "target", xlabel=L"x", ylabel=L"f(x)", title="$basis_choice with $dst distribtuion")
 
                 plot!(training_flatten, f.(training_flatten), c=1, seriestype=:scatter, m=:o, ms=1, ma=0.08, label = "train")
                 plot!(xp_pp_test, yp, c=2, lw=2, ls=:dash, label = "prediction")
@@ -75,15 +75,15 @@ let fs=[f1, f2]
         end
     end
     l = @layout [grid(length(fs)+length(basis_choices)+2, length(distributions))]
-    PL = plot(plots..., layout = l, margin = 5mm, size=(2600, 1500), plot_title="J=$BasisDeg, K_N = $K_N, noise=$noise, test_uniform=$test_uniform")
-    # savefig(PL, exp_dir*"2b_basic_with_train_plots_KN=" * string(K_N)*"f=$fs")
-    # savefig(PL, exp_dir*"2b_basic_plots_KN=" * string(K_N)*"f=$fs")
+    PL = plot(plots..., layout = l, margin = 5mm, size=(2600, 1500), plot_title="J=$BasisDeg, K_1 = $K_1, noise=$noise, test_uniform=$test_uniform")
+    # savefig(PL, exp_dir*"2b_basic_with_train_plots_KN=" * string(K_1)*"f=$fs")
+    # savefig(PL, exp_dir*"2b_basic_plots_KN=" * string(K_1)*"f=$fs")
 end
 
 # condition number 
 let 
     N = BasisDeg
-    let K_Ns = [1, 4, 16, 64], Ms = 2 .^(7:13)
+    let K_1s = [1, 4, 16, 64], Ms = 2 .^(7:13)
         testSampleSize = 10 # does not matter for design matrix
         # Add poly when pack has it
         basis_choices = [cheb, legendre, "orthpoly"]
@@ -101,23 +101,23 @@ let
 #             push!(plots, histogram(rand(data_dst[each], 1000), bins = 20, title="$each Dist"))
 #         end
         
-        for K_N in K_Ns
+        for K_1 in K_1s
             for dst in distributions 
                 P = plot(xaxis  = (:log, "Sample Size (M)"),
                             yaxis  = (:log, L"\kappa(A^TA)"), 
                             legend = :outerbottomright, 
-                            title = "K_N=$K_N",
+                            title = L"K_1=%$K_1",
                             size = (200, 200))
                 plot!(P, Ms, 1 .^(7:13), c=1, ls=:dash, label="")
 
                 for basis_choice in basis_choices
-#                     basis = get_basis(basis_choice, N, K_N, data_dst, dst; adaptedTrainSize=adaptedTrainSize)
+#                     basis = get_basis(basis_choice, N, K_1, data_dst, dst; adaptedTrainSize=adaptedTrainSize)
                     conds = zeros(1, length(Ms))
                     for i in 1:length(Ms)
                         M = Ms[i]
                         # give sufficient data for adapted basis
-                        basis = HelperFunctions.get_basis(basis_choice, N, K_N, data_dst, dst; adaptedTrainSize=M)
-                        rs, _ = HelperFunctions.generate_data(M, K_N, testSampleSize, data_dst, dst)
+                        basis = HelperFunctions.get_basis(basis_choice, N, K_1, data_dst, dst; adaptedTrainSize=M)
+                        rs, _ = HelperFunctions.generate_data(M, K_1, testSampleSize, data_dst, dst)
                         A = HelperFunctions.design_matrix(rs, basis, N)
                         conds[i] = cond(A'A)
                     end
@@ -129,7 +129,7 @@ let
         l = @layout [grid(1,4)]
         # plot_title="Condition Number of the Gram Matrix with Basis Size=$N"
         p1 = plot(plots..., layout = l, size=(2000, 400), margin = 10mm)
-        # savefig(p1, exp_dir*"basic_model_cond_no_deg=$N"*"dst=$dst")
+        savefig(p1, exp_dir*"basic_model_cond_no_deg=$N"*"dst=$distributions")
         # p1
     end
 
@@ -153,7 +153,7 @@ end
 
 #     domain_lower=-1
 #     domain_upper=1
-#     K_N = 4
+#     K_1 = 4
 
 #     noise=0
 #     # noise=1e-4
@@ -164,7 +164,7 @@ end
 #     Testing_func(X) = E_avg(X, f)
 #     poly = legendre_basis(max_degree, normalize = true)
 
-#     X = rand(distribution(domain_lower, domain_upper), (M, K_N))
+#     X = rand(distribution(domain_lower, domain_upper), (M, K_1))
 #     Y = Testing_func(X) .+ noise
 
 #     A_pure = designMatNB(X, poly, max_degree, ord; body = body_order)
@@ -184,7 +184,7 @@ end
 #     p = plot(target_x, f.(target_x), c=1,
 #     #                         xlim=[-1.1, 1.1], ylim=[-1, 2],
 #                 size = (1000, 800),
-#                 label = "target", xlabel="x", ylabel="f(x)", title="order=$ord, basis maxdeg = $max_degree, sample size = $M, K_N=$K_N")
+#                 label = "target", xlabel="x", ylabel="f(x)", title="order=$ord, basis maxdeg = $max_degree, sample size = $M, K_1=$K_1")
 #     training_flatten = reduce(vcat, X)
 #     test_flatten = reduce(vcat, XX_test)
 #     plot!(training_flatten, f.(training_flatten), c=1, seriestype=:scatter, m=:o, ms=1, label = "")
