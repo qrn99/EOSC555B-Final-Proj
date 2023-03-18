@@ -18,10 +18,10 @@ mkpath(exp_dir)
 
 BasisDeg=20
 
-num_data = 1000
-K_1 = 32
+num_data = 100
+K_1 = 10
 
-M = floor(num_data / K_1)
+M = Int(floor(num_data / K_1))
 
 testSampleSize=400
 test_uniform=true
@@ -80,7 +80,7 @@ let fs=[f1, f2]
     l = @layout [grid(length(fs)+length(basis_choices)+2, length(distributions))]
     PL = plot(plots..., layout = l, margin = 5mm, size=(2600, 1500))
     # plot_title="J=$BasisDeg, K_1 = $K_1, noise=$noise, test_uniform=$test_uniform"
-    savefig(PL, exp_dir*"2b_basic_with_train_plots"*"_J=$BasisDeg"*"_K_1=$K_1"*"_test_uniform=$test_uniform"*"_f="*string(fs))
+    savefig(PL, exp_dir*"2b_basic_with_train_plots"*"_J=$BasisDeg"*"_K_1=$K_1"* "_total_data=$num_data" * "_M=$M" *"_f="*string(fs))
     # savefig(PL, exp_dir*"2b_basic_plots_KN=" * string(K_1)*"f=$fs")
     PL
 end
