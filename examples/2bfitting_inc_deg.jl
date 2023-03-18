@@ -11,8 +11,8 @@ mkpath(exp_dir)
 f1(x) = 1/(1+8*x^2)
 f2(x) = abs(x)^3
 # E_avg(X, f) = sum([f.(X[:, i]) for i = 1:size(X)[2]])
-# E_avg(X, f) = sum([f.(X[:, i])/length(size(X)[2]) for i = 1:size(X)[2]])
-E_avg(X, f) = mean([f.(X[:, i]) for i = 1:size(X)[2]])
+# E_avg(X, f) = sum([f.(X[:, i])/sqrt(length(size(X)[2])) for i = 1:size(X)[2]])
+E_avg(X, f) = mean([f.(X[:, i]) for i = 1:size(X)[2]]) * sqrt(length(size(X)[2]))
 
 f = f1
 
@@ -35,14 +35,16 @@ solver = :qr
 
 NN = [5, 10, 20, 30]
 MM = 10*NN.^2 .+ 50
+# MM = Int.(floor.(log.(NN) .* NN))
 K_1s = [1, 4, 16, 64]
+# K_1s = [1, 4]
 let
     Testing_func(X) = E_avg(X, f)
     plots = []
     # push!(plots, histogram(rand(Uniform(domain_lower, domain_upper), 500), bins = 20, title="Uniform Dist"))
     for K_1 in K_1s
         error = zeros(length(NN))'
-        P = plot(xaxis  = (:log, "sample size", ),
+        P = plot(xaxis  = (:log, "Sample Size", ),
                             yaxis  = (:log, "RMSE"), 
                             legend = :outerbottomright, 
                             size = (300, 100))
@@ -78,15 +80,15 @@ let
             p = plot(target_x, f.(target_x), c=1,
             #                         xlim=[-1.1, 1.1], ylim=[-1, 2],
                         size = (1000, 800),
-                        label = "target", xlabel=L"x", ylabel=L"f(x)", title="Basis Size = $max_degree, Sample Size = $M")
+                        label = "target", xlabel=L"x", ylabel=L"f(x)", title=L"K_1=%$K_1"*", Basis Size = $max_degree")
             training_flatten = reduce(vcat, X)
             test_flatten = reduce(vcat, XX_test)
-            plot!(training_flatten, f.(training_flatten), c=1, seriestype=:scatter, m=:o, ms=1, ma=0.08, label = "")
+            plot!(training_flatten, f.(training_flatten), c=1, seriestype=:scatter, m=:o, ms=1, ma=0.008, label = "train")
             plot!(XX_test, yp, c=2, ls=:dash, lw=2, label = "prediction")
             push!(plots, p) 
         end
-        plot!(P, MM, error', lw=1, m=:o, ms=3, label="K_1=$K_1")
-        plot!(P, MM, 1.0 ./ sqrt.(MM), ls=:dash,)
+        plot!(P, MM, error', lw=1, m=:o, ms=3, label=L"K_1=%$K_1")
+        # plot!(P, MM, 1.0 ./ sqrt.(MM), ls=:dash,)
         push!(plots, P)
     end
     l = @layout [grid(length(K_1s), length(NN)+1)]
