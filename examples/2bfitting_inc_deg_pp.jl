@@ -37,7 +37,9 @@ env(r) = (r^(-p) - r_cut^(-p) + p * r_cut^(-p-1) * (r - r_cut)) * (r < r_cut)
 f1(x) = 1/(1+8*x^2)
 f2(x) = abs(x)^3
 # E_avg(X, f) = sum([f.(X[:, i]) for i = 1:size(X)[2]])
-E_avg(X, f) = mean([f.(X[:, i]) for i = 1:size(X)[2]])
+# E_avg(X, f) = mean([f.(X[:, i]) for i = 1:size(X)[2]])
+E_avg(Rs::Vector{Vector{Float64}}, f) = [ sum(f.(R))/sqrt(length(R)) for R in Rs ]
+
 
 f = ϕ
 
@@ -61,6 +63,7 @@ solver = :qr
 NN = [5, 10, 20, 30]
 MM = 10*NN.^2 .+ 50
 K_1s = [1, 4, 16, 64]
+# K_1s = [1, 4]
 let
     Testing_func(X) = E_avg(X, f)
     plots = []
@@ -69,7 +72,7 @@ let
         error = zeros(length(NN))'
         P = plot(xaxis  = (:log, "sample size", ),
                             yaxis  = (:log, "RMSE"), 
-                            legend = :outerbottomright, 
+                            legend = :topright, 
                             size = (300, 100))
         for t = eachindex(NN)
             M = MM[t]
@@ -101,7 +104,7 @@ let
             p = plot(target_x, f.(target_x), c=1,
             #                         xlim=[-1.1, 1.1], ylim=[-1, 2],
                         size = (1000, 800),
-                        label = "target", xlabel=L"x", ylabel=L"f(x)", title="Basis Size = $max_degree, Sample Size = $M")
+                        label = "target", xlabel=L"r", ylabel=L"V_1(r)", title=L"K_1=%$K_1"*", Basis Size = $max_degree")
             training_flatten = reduce(vcat, X)
             test_flatten = reduce(vcat, XX_test)
             plot!(training_flatten, f.(training_flatten), c=1, seriestype=:scatter, m=:o, ms=1, ma=0.008, label = "train")
@@ -113,7 +116,7 @@ let
     end
     l = @layout [grid(length(K_1s), length(NN)+1)]
         
-    plt = plot(plots..., layout = l, size=(2500, 1000), margin=10mm)
+    plt = plot(plots..., layout = l, size=(2500, 1300), margin=15mm)
     savefig(plt, exp_dir*"/pp_inc_deg_[" * string(NN[1]) * "," * string(NN[end]) * "]" * "_K_1=[" * string(K_1s[1]) * "," * string(K_1s[end]) * "]" * "_order=$ord" * "_solver=$solver")
     plt
 end
