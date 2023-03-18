@@ -46,7 +46,7 @@ let
         error = zeros(length(NN))'
         P = plot(xaxis  = (:log, "Sample Size", ),
                             yaxis  = (:log, "RMSE"), 
-                            legend = :outerbottomright, 
+                            legend = :topright, 
                             size = (300, 100))
         for t = eachindex(NN)
             M = MM[t]
