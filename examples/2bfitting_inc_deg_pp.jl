@@ -60,12 +60,12 @@ solver = :qr
 
 NN = [5, 10, 20, 30]
 MM = 10*NN.^2 .+ 50
-K_Rs = [2, 4, 12]
+K_1s = [1, 4, 16, 64]
 let
     Testing_func(X) = E_avg(X, f)
     plots = []
     # push!(plots, histogram(rand(Uniform(domain_lower, domain_upper), 500), bins = 20, title="Uniform Dist"))
-    for K_R in K_Rs
+    for K_1 in K_1s
         error = zeros(length(NN))'
         P = plot(xaxis  = (:log, "sample size", ),
                             yaxis  = (:log, "RMSE"), 
@@ -77,7 +77,7 @@ let
 
             poly = legendre_basis(max_degree, normalize = true)
 
-            X = rand(distribution(domain_lower, domain_upper), (M, K_R))
+            X = rand(distribution(domain_lower, domain_upper), (M, K_1))
             Y = Testing_func(X) .+ noise
 
             A_pure = designMatNB(x.(X), poly, max_degree, ord; body = body_order)
@@ -91,7 +91,7 @@ let
             ground_yp = f.(XX_test)
             RMSE = norm(yp - ground_yp)/sqrt(M)
 
-            println("Max Basis Deg: $max_degree, K_R: $K_R")
+            println("Max Basis Deg: $max_degree, K_1: $K_1")
             println("Relative error: ", norm(yp - ground_yp)/norm(ground_yp))
             println("RMSE: ", RMSE)
 
@@ -101,20 +101,20 @@ let
             p = plot(target_x, f.(target_x), c=1,
             #                         xlim=[-1.1, 1.1], ylim=[-1, 2],
                         size = (1000, 800),
-                        label = "target", xlabel="x", ylabel="f(x)", title="maxdeg = $max_degree, sample size = $M")
+                        label = "target", xlabel=L"x", ylabel=L"f(x)", title="Basis Size = $max_degree, Sample Size = $M")
             training_flatten = reduce(vcat, X)
             test_flatten = reduce(vcat, XX_test)
-            plot!(training_flatten, f.(training_flatten), c=1, seriestype=:scatter, m=:o, ms=1, label = "")
+            plot!(training_flatten, f.(training_flatten), c=1, seriestype=:scatter, m=:o, ms=1, ma=0.008, label = "train")
             plot!(XX_test, yp, c=2, ls=:dash, lw=2, label = "prediction")
             push!(plots, p) 
         end
-        plot!(P, MM, error', lw=1, m=:o, ms=3, label="K_R=$K_R")
+        plot!(P, MM, error', lw=1, m=:o, ms=3, label="K_1=$K_1")
         push!(plots, P)
     end
-    l = @layout [grid(length(K_Rs), length(NN)+1)]
+    l = @layout [grid(length(K_1s), length(NN)+1)]
         
-    plt = plot(plots..., layout = l, size=(2500, 1000), margin=10mm, plot_title="order=$ord, solver=$solver, noise=$noise, test_uniform=$test_uniform")
-    savefig(plt, exp_dir*"/pp_inc_deg_[" * string(NN[1]) * "," * string(NN[end]) * "]" * "_K_R=[" * string(K_Rs[1]) * "," * string(K_Rs[end]) * "]")
+    plt = plot(plots..., layout = l, size=(2500, 1000), margin=10mm)
+    savefig(plt, exp_dir*"/pp_inc_deg_[" * string(NN[1]) * "," * string(NN[end]) * "]" * "_K_1=[" * string(K_1s[1]) * "," * string(K_1s[end]) * "]" * "_order=$ord" * "_solver=$solver")
     plt
 end
 
