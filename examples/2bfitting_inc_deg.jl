@@ -91,8 +91,8 @@ let
     end
     l = @layout [grid(length(K_1s), length(NN)+1)]
         
-    plt = plot(plots..., layout = l, size=(2500, 1000), margin=10mm, plot_title="order=$ord, solver=$solver, noise=$noise, test_uniform=$test_uniform")
-    # savefig(plt, exp_dir*"/pp_inc_deg_[" * string(NN[1]) * "," * string(NN[end]) * "]" * "_K_1=[" * string(K_1s[1]) * "," * string(K_1s[end]) * "]" * "_order=$ord" * "_solver=$solver"*string(f))
+    plt = plot(plots..., layout = l, size=(2500, 1000), margin=10mm)
+    savefig(plt, exp_dir*"/pp_inc_deg_[" * string(NN[1]) * "," * string(NN[end]) * "]" * "_K_1=[" * string(K_1s[1]) * "," * string(K_1s[end]) * "]" * "_order=$ord" * "_solver=$solver"*string(f))
     plt
 end
 
