@@ -196,3 +196,28 @@ end
 #     p
 # end
 # ##
+
+#### Plot Data Distribution ####
+# let fs=[f1, f2]
+#     N = 20
+#     # Add poly when pack has it
+#     basis_choices = [HelperFunctions.cheb, HelperFunctions.legendre, "orthpoly"]
+
+#     distributions = ["uniform", "hole", "bimodal", "abs"]
+
+#     plots = []
+
+#     data_dst = HelperFunctions.generate_data_dst(0.3, -0.8, 0.9, domain_lower, domain_upper; abs_width=0.8)
+
+#     push!(plots, histogram(rand(1000)*2 .- 1, bins = 50, xaxis=L"x", yaxis="occurrence", title="uniform distribtuion", legend = false))
+
+#     Random.seed!(12216859)
+#     for each in keys(data_dst)
+#         push!(plots, histogram(rand(data_dst[each], 1000), bins = 20, xaxis=L"x", title="$each distribtuion", legend = false))
+#     end
+#     l = @layout [grid(1, length(distributions))]
+#     PL = plot(plots..., layout = l, margin = 5mm, size=(1000, 200))
+#     # plot_title="J=$BasisDeg, K_1 = $K_1, noise=$noise, test_uniform=$test_uniform"
+#     savefig(PL, exp_dir*"data_dst")
+#     PL
+# end
