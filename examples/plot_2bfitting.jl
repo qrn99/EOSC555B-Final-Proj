@@ -19,7 +19,7 @@ mkpath(exp_dir)
 BasisDeg=20
 
 num_data = 1000
-K_1 = 4
+K_1 = 32
 
 M = floor(num_data / K_1)
 
@@ -82,6 +82,7 @@ let fs=[f1, f2]
     # plot_title="J=$BasisDeg, K_1 = $K_1, noise=$noise, test_uniform=$test_uniform"
     savefig(PL, exp_dir*"2b_basic_with_train_plots"*"_J=$BasisDeg"*"_K_1=$K_1"*"_test_uniform=$test_uniform"*"_f="*string(fs))
     # savefig(PL, exp_dir*"2b_basic_plots_KN=" * string(K_1)*"f=$fs")
+    PL
 end
 
 # condition number 
@@ -90,7 +91,7 @@ let
     let K_1s = [1, 4, 16, 64], Ms = 2 .^(7:13)
         testSampleSize = 10 # does not matter for design matrix
         # Add poly when pack has it
-        basis_choices = [cheb, legendre, "orthpoly"]
+        basis_choices = [HelperFunctions.cheb, HelperFunctions.legendre, "orthpoly"]
     
         distributions = ["uniform"]
     
