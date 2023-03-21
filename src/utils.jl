@@ -178,7 +178,7 @@ function designMatNB(train, poly_basis, max_deg, ord; body=:TwoBodyThreeBody)
    else
        println("Does not support this body order.")
    end
-   return A / binomial(K_R, ord) # assume if we are fitting ord-body energy, we use the ord which makes sense
+   return A / sqrt(K_R) # assume if we are fitting ord-body energy, we use the ord which makes sense
 end
 
 """
@@ -530,5 +530,160 @@ function designMatNB2D(train, poly_basis, max_deg_poly, max_deg_exp, ord; body=:
        println("Does not support this body order.")
    end
    @show maximum(real(A))
-   return real(A) / binomial(K_R, ord), spec
+   return real(A) / sqrt(K_R), spec
+end
+
+
+"""
+    designMat3B2D(train, poly_basis, max_deg_poly, max_deg_exp, ord; body=:TwoBodyThreeBody)
+    Returns the design matrix for averaged estimation 2D model and spec, assuming no-correlation between data input vectors.
+    
+    * @param train          Vector{Vector{Vector(Float64)}}     set of atomic strucutres (1d) is array of array of radius distances
+    * @param poly_basis     OrthPolyBasis1D3T{Float64}          basis function
+    * @param max_deg_poly   Int64                               maximum degree of poly basis function
+    * @param max_deg_exp    Int64                               maximum degree of exp basis function
+    * @param body           Int64                               body order
+    * @return               Matrix{ComplexF64}                  design matrix
+    * @return               Vector{tuple(Int)}                  specification of the design matrix
+
+    # Examples
+    ```jldoctest
+    num_sam = 10
+    K_3 = 4
+    train = rand(num_sam, K_3, 2)
+    poly_basis = chebyshev_basis(10)
+    max_deg_poly = 5
+    max_deg_exp = 5
+    ord = 2
+    A, spec = designMatNB2D(train, poly_basis, max_deg_poly, max_deg_exp, ord; body=:TwoBodyThreeBody)
+    ```
+"""
+function designMat3B2D(train, poly_basis, max_deg_poly, max_deg_exp, ord; body=:TwoBodyThreeBody, rotationInv = true) # TODO: remove ord later
+   if body == :TwoBody
+        ord = 1
+   else
+        ord = 2
+   end
+   
+#     if body == :TwoBody # 2body interaction
+#         A = zeros(ComplexF64, M, length(NN2b) * length(NN_exp2b))
+#         for i = 1:length(NN2b)
+#             nn = NN2b[i]
+#             for j = 1:length(NN_exp2b)
+#                 #@show i, j
+#                 #@show (i-1) * length(NN_exp2b) + j
+#                 pow = NN_exp2b[j] # actual power
+#                 pp = pow .+ max_deg_exp .+ 1 # index in the exp_list
+#                 A[:, (i-1) * length(NN_exp2b) + j] = sum([poly_list[p][:, nn] .* exp_list[p][:, pp] for p = 1:K_N ])
+#                 push!(spec, [(nn[1], pp[1])])
+#             end
+#         end
+#     elseif body == :ThreeBody #3body interaction
+#         A = zeros(ComplexF64, M, length(NN3b) * length(NN_exp3b))
+#         for i = 1:length(NN3b)
+#             nn, mm = NN3b[i]
+#             for j = 1:length(NN_exp3b)
+#                 pow_pp, pow_qq = NN_exp3b[j]
+#                 pp, qq = pow_pp .+ max_deg_exp .+ 1, pow_qq .+ max_deg_exp .+ 1 # index in the exp_list
+#                 A[:, (i-1) * length(NN_exp3b) + j] = sum([poly_list[p][:, nn] .* exp_list[p][:, mm] for p=1:K_N ])
+#                 push!(spec, [(nn, pp), (mm, qq)])
+#             end
+#         end
+#     elseif body == :TwoBodyThreeBody #both 2b3b
+#         A = zeros(ComplexF64, M, length(NN2b) * length(NN_exp2b) + length(NN3b) * length(NN_exp3b))
+#         for i = 1:length(NN2b)
+#             nn = NN2b[i]
+#             for j = 1:length(NN_exp2b)
+#                 pow = NN_exp2b[j] # actual power
+#                 pp = pow .+ max_deg_exp .+ 1 # index in the exp_list
+#                 A[:, (i-1) * length(NN_exp2b) + j] = sum([poly_list[p][:, nn] for p=1:K_N ])
+#                 push!(spec, [(nn[1], pp[1])])
+#             end
+#         end
+#         for i = 1:length(NN3b)
+#             nn, mm = NN3b[i]
+#             for j = 1:length(NN_exp3b)
+#                 pow_pp, pow_qq = NN_exp3b[j]
+#                 pp, qq = pow_pp .+ max_deg_exp .+ 1, pow_qq .+ max_deg_exp .+ 1 # index in the exp_list
+#                 A[:, length(NN2b) * length(NN_exp2b) + (i-1) * length(NN_exp3b) + j] = sum([poly_list[p][:, nn] .* exp_list[p][:, pp] for p=1:K_N])
+#                 push!(spec, [(nn, pp), (mm, qq)])
+#             end
+#         end
+#     else
+#        println("Does not support this body order.")
+#     end
+#     @show maximum(real(A))
+    NN = get_NN(max_deg_poly, ord)
+    NN2b = NN[length.(NN) .== 1]
+    NN3b = NN[length.(NN) .== 2]
+    # NN_exp2b, NN_exp3b = get_NN_exp(max_deg_exp, rotationInv)
+    NN_exp2b, NN_exp3b = [[0]], [NN3b]
+    @show NN_exp3b
+
+    M, K_N, _ = size(train)
+    
+    xs_rad = spatial2rad(train) # num_data × K_N × 2
+    @show [maximum(xs_rad[:,i,1]) for i = 1:K_N]
+    @show maximum(poly_basis(xs_rad[:,1,1]))
+    poly_list = [poly_basis(xs_rad[:, i, 1]) for i = 1:K_N] #  K_N × num_data × length(poly_basis) 
+    exp_list = [exp_basis(xs_rad[:, i, 2], max_deg_exp) for i = 1:K_N] #  K_N × num_data × max_deg_exp
+    spec = []
+    @show maximum(poly_list[1])
+
+    if body == :TwoBody # 2body interaction
+        A = zeros(ComplexF64, M, length(NN2b) * length(NN_exp2b))
+        for i = 1:length(NN2b)
+            nn = NN2b[i]
+            for j = 1:length(NN_exp2b)
+                #@show i, j
+                #@show (i-1) * length(NN_exp2b) + j
+                pow = NN_exp2b[j] # actual power
+                pp = pow .+ max_deg_exp .+ 1 # index in the exp_list
+                A[:, (i-1) * length(NN_exp2b) + j] = sum([poly_list[p][:, nn] .* exp_list[p][:, pp] for p = 1:K_N ])
+                push!(spec, [(nn[1], pp[1])])
+            end
+        end
+    elseif body == :ThreeBody #3body interaction
+        A = zeros(ComplexF64, M, length(NN3b) * length(NN_exp3b))
+        for i = 1:length(NN3b)
+            nn, mm = NN3b[i]
+            for j = 1:length(NN_exp3b)
+                # pow_pp, pow_qq = NN_exp3b[j]
+                # pp, qq = pow_pp .+ max_deg_exp .+ 1, pow_qq .+ max_deg_exp .+ 1 # index in the exp_list
+                # pow_pp = NN_exp3b[j][2]
+                # @show(pow_pp)
+                # pp = pow_pp .+ max_deg_exp .+ 1
+                # @show(pp)
+                pp = mm + max_deg_exp + 1
+                A[:, (i-1) * length(NN_exp3b) + j] = sum([poly_list[p][:, nn] .* exp_list[p][:, pp] for p=1:K_N ])
+                # poly_list[p][:, nn] .* poly_list[q][:, mm] .* exp_list[p][:, pp] .* exp_list[q][:, qq] for p=1:K_R for q=1:K_R
+                push!(spec, [(nn, pp)])
+            end
+        end
+    elseif body == :TwoBodyThreeBody #both 2b3b
+        A = zeros(ComplexF64, M, length(NN2b) * length(NN_exp2b) + length(NN3b) * length(NN_exp3b))
+        for i = 1:length(NN2b)
+            nn = NN2b[i]
+            for j = 1:length(NN_exp2b)
+                pow = NN_exp2b[j] # actual power
+                pp = pow .+ max_deg_exp .+ 1 # index in the exp_list
+                A[:, (i-1) * length(NN_exp2b) + j] = sum([poly_list[p][:, nn] .* exp_list[p][:, pp] for p=1:K_N ])
+                push!(spec, [(nn[1], pp[1])])
+            end
+        end
+        for i = 1:length(NN3b)
+            nn, mm = NN3b[i]
+            for j = 1:length(NN_exp3b)
+                pow_mm = NN_exp3b[j][2]
+                mm = pow_mm .+ max_deg_exp .+ 1 # index in the exp_list
+                A[:, length(NN2b) * length(NN_exp2b) + (i-1) * length(NN_exp3b) + j] = sum([poly_list[p][:, nn] .* exp_list[p][:, mm] for p=1:K_N ])
+                push!(spec, [(nn, mm)])
+            end
+        end
+    else
+        println("Does not support this body order.")
+    end
+    A = real(A)
+    @show(maximum(A))
+    return A / sqrt(K_N), spec
 end
