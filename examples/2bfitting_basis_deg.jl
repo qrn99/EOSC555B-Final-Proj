@@ -73,7 +73,7 @@ noise=0
         # l = @layout [grid(length(fs), length(distributions))]
         l = @layout [grid(length(distributions), length(fs))]
         # plot_title="Prediction Error Plot with Sufficient Data for Increasing Basis Size"
-        p1 = plot(plots..., layout = l, size=(1000, 500), margin = 15mm)
+        p1 = plot(plots..., layout = l, size=(800, 400), margin = 6mm)
         # p1 = plot(plots..., layout = l, size=(2500, 1200), margin = 15mm)
         savefig(p1, exp_dir*"basic_model_RSME_inc_basis_test_unif=$test_uniform" * string(fs) * "_basis_no="*string(length(basis_choices)) * "_dst_no="*string(length(distributions)))
         p1
