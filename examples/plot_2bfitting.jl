@@ -105,18 +105,23 @@ let
 #         for each in keys(data_dst)
 #             push!(plots, histogram(rand(data_dst[each], 1000), bins = 20, title="$each Dist"))
 #         end
-        
         for K_1 in K_1s
+            if K_1 > 4
+                legend_pos = :bottomright
+            else
+                legend_pos = :topright
+            end
             for dst in distributions 
                 P = plot(xaxis  = (:log, "Sample Size (M)"),
                             yaxis  = (:log, L"\kappa(A^TA)"), 
-                            legend = :outerbottomright, 
+                            legend = legend_pos, 
                             title = L"K_1=%$K_1",
-                            size = (200, 200))
+                            size = (200, 200),
+                            link=:all)
                 plot!(P, Ms, 1 .^(7:13), c=1, ls=:dash, label="")
 
                 for basis_choice in basis_choices
-#                     basis = get_basis(basis_choice, N, K_1, data_dst, dst; adaptedTrainSize=adaptedTrainSize)
+        #                     basis = get_basis(basis_choice, N, K_1, data_dst, dst; adaptedTrainSize=adaptedTrainSize)
                     conds = zeros(1, length(Ms))
                     for i in 1:length(Ms)
                         M = Ms[i]
@@ -126,77 +131,25 @@ let
                         A = HelperFunctions.design_matrix(rs, basis, N)
                         conds[i] = cond(A'A)
                     end
-                    plot!(P, Ms, conds', xscale=:log10, yscale=:log10, shape=:circle, label="$basis_choice")
+                    plot!(P, Ms, conds', xscale=:log10, yscale=:log10, shape=:auto, alpha=0.8, label="$basis_choice", link=:all)
                 end
                 push!(plots, P)
             end
         end
-        l = @layout [grid(1,4)]
+        l = @layout [grid(2,2)]
         # plot_title="Condition Number of the Gram Matrix with Basis Size=$N"
-        p1 = plot(plots..., layout = l, size=(2000, 400), margin = 10mm)
-        savefig(p1, exp_dir*"basic_model_cond_no_deg=$N"*"dst=$distributions")
-        # p1
+        p1 = plot(plots..., layout = l, size=(800, 700), margin = 3mm, link=:all)
+        savefig(p1, exp_dir*"basic_model_cond_no_deg=$N"*"dst="*string(distributions))
+        p1
     end
-
 end
 ##
 
-# let
-#     f1(x) = 1/(1+8*x^2)
-#     f2(x) = abs(x)^3
-#     # E_avg(X, f) = sum([f.(X[:, i]) for i = 1:size(X)[2]])
-#     E_avg(X, f) = sum([f.(X[:, i])/length(size(X)[2]) for i = 1:size(X)[2]])
+x = range(0,1,101)
+p1 = plot(x,[sin.(x) exp.(x)],layout=(2,1),link=:all,label=nothing);
+p2 = plot(x,[cos.(x) tan.(1.5x)],layout=(2,1),label=nothing);
+plot([p1,p2]...,layout=(1,2))
 
-#     M = 100
-#     max_degree = 20
-#     ord = 1 #2b+3b, can access 3b only 
-#     body_order = :TwoBody
-
-#     testSampleSize=400
-#     test_uniform=true
-#     distribution=Uniform
-
-#     domain_lower=-1
-#     domain_upper=1
-#     K_1 = 4
-
-#     noise=0
-#     # noise=1e-4
-
-#     solver = :qr
-
-#     f = f2
-#     Testing_func(X) = E_avg(X, f)
-#     poly = legendre_basis(max_degree, normalize = true)
-
-#     X = rand(distribution(domain_lower, domain_upper), (M, K_1))
-#     Y = Testing_func(X) .+ noise
-
-#     A_pure = designMatNB(X, poly, max_degree, ord; body = body_order)
-
-#     sol_pure = solveLSQ(A_pure, Y; solver=solver)
-
-#     XX_test = range(domain_lower, domain_upper, length=testSampleSize)
-
-#     A_test = predMatNB(XX_test, poly, max_degree, ord; body = body_order)
-#     yp = A_test * sol_pure
-#     ground_yp = f.(XX_test)
-
-#     println("relative error of pure basis: ", norm(yp - ground_yp)/norm(ground_yp))
-#     println("RMSE: ", norm(yp - ground_yp)/sqrt(M))
-
-#     target_x = range(domain_lower, domain_upper, length=500)
-#     p = plot(target_x, f.(target_x), c=1,
-#     #                         xlim=[-1.1, 1.1], ylim=[-1, 2],
-#                 size = (1000, 800),
-#                 label = "target", xlabel="x", ylabel="f(x)", title="order=$ord, basis maxdeg = $max_degree, sample size = $M, K_1=$K_1")
-#     training_flatten = reduce(vcat, X)
-#     test_flatten = reduce(vcat, XX_test)
-#     plot!(training_flatten, f.(training_flatten), c=1, seriestype=:scatter, m=:o, ms=1, label = "")
-#     plot!(XX_test, yp, c=2, ls=:dash, label = "prediction")
-#     p
-# end
-# ##
 
 #### Plot Data Distribution ####
 # let fs=[f1, f2]
