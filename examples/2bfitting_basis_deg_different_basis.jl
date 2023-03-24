@@ -24,8 +24,10 @@ rdf_bimodal=0.3
 K_N = 64
 noise=0
 
-    let NN = [5, 7, 10, 13, 17, 21, 25, 30, 35, 40], MM = NN.^2, fs=[f1, f2]
-
+    let NN = [5, 7, 10, 13, 17, 21, 25, 30, 35, 40], MM = NN.^2
+        
+        f=f1
+        # f=f2
         # Add poly when pack has it
         basis_choices = [HelperFunctions.cheb, HelperFunctions.legendre, "orthpoly"]
 
@@ -42,7 +44,6 @@ noise=0
         #     push!(plots, histogram(rand(data_dst[each], 1000), bins = 20, title="$each distribution", label=""))
         # end
 
-        for f in fs
             for dst in distributions 
                 if f == f1
                     P = plot(xaxis  = (:log, "Basis Size"),
@@ -50,7 +51,7 @@ noise=0
                             legend = :topright, 
                             title = L"f_1"* " with $dst distribution",
                             size = (300, 100))
-                    plot!(P, NN[2:5], NN[2:5].^(-3), lw=2, c=10, ls=:dash, ms=3, label = L"J^{-3}")
+                    plot!(P, NN[2:7], NN[2:7].^(-3), lw=2, c=10, ls=:dash, ms=3, label = L"J^{-3}")
                 else
                     P = plot(xaxis  = ("Basis Size"),
                             yaxis  = (:log, "RMSE"), 
@@ -67,10 +68,9 @@ noise=0
                 end
                 push!(plots, P)
             end
-        end
-        l = @layout [grid(length(fs), length(distributions))]
+        l = @layout [grid(2, 2)]
         # plot_title="Prediction Error Plot with Sufficient Data for Increasing Basis Size"
-        p1 = plot(plots..., layout = l, size=(2500, 1200), margin = 15mm)
-        savefig(p1, exp_dir*"basic_model_RSME_inc_deg_K_1=$K_N" * "_noise=$noise" * "_test_unif=$test_uniform" * ".png")
+        p1 = plot(plots..., layout = l, size=(800, 700), margin = 3mm, plot_title=L"K_1=%$K_N")
+        savefig(p1, exp_dir*"basic_model_RSME_inc_deg_K_1=$K_N" * "_noise=$noise" * "_test_unif=$test_uniform" * "_f = $f")
         p1
     end
