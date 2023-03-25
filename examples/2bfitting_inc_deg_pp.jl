@@ -60,8 +60,8 @@ solver = :qr
 
 NN = [5, 10, 20, 30]
 MM = 10*NN.^2 .+ 50
-K_1s = [1, 4, 16, 64]
-# K_1s = [1, 4]
+# K_1s = [1, 4, 16, 64]
+K_1s = [1, 4]
 
 let
     Testing_func(X) = E_avg(X, f)
@@ -96,16 +96,20 @@ let
             p = plot(target_x, f.(target_x), c=1,
             #                         xlim=[-1.1, 1.1], ylim=[-1, 2],
                         size = (1000, 800),
-                        label = "target", xlabel=L"x", ylabel=L"f(x)", title=L"K_1=%$K_1"*", Basis Size = $max_degree")
+                        label = "target", 
+                        xlabel=L"x", 
+                        ylabel=L"f(x)", 
+                        title=L"K_1=%$K_1"*", Basis Size = $max_degree",
+                        link = :all)
             training_flatten = reduce(vcat, X)
             test_flatten = reduce(vcat, XX_test)
-            plot!(training_flatten, f.(training_flatten), c=1, seriestype=:scatter, m=:o, ms=1, ma=0.08, label = "train")
-            plot!(XX_test, yp, c=2, ls=:dash, lw=2, label = "prediction")
+            plot!(training_flatten, f.(training_flatten), c=1, seriestype=:scatter, m=:o, ms=1, ma=0.08, label = "train", link = :all)
+            plot!(XX_test, yp, c=2, ls=:dash, lw=2, label = "prediction", link = :all)
             push!(plots, p) 
         end
     end
     l = @layout [grid(length(K_1s), length(NN))]
-        
+    # linkyaxes!(plots...)
     plt = plot(plots..., layout = l, size=(2500, 1000), margin=10mm)
     savefig(plt, exp_dir*"/pp_inc_deg_[" * string(NN[1]) * "," * string(NN[end]) * "]" * "_K_1=[" * string(K_1s[1]) * "," * string(K_1s[end]) * "]" * "_order=$ord" * "_solver=$solver"*string(f))
     plt
