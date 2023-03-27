@@ -19,7 +19,7 @@ q = 4   # prior smoothness, could be exp
 # morse transform
 x2(r) = 1 / (1 + r / r_nn)
 
-#Agnesis Transform
+#Agnesi Transform
 # 0.33 = a = (p-1)/(p+1)
 x1(r) = 1.0 / (1.0 + 0.33*(r / r_nn)^2)
 
@@ -40,9 +40,9 @@ domain_upper=r_cut+1
 
 Xs = range(domain_lower, r_cut, 1000)
 # Rs = range(domain_lower, domain_upper, 1000)
-Agnesis_transf_Xs = x.(Xs, x1)
+Agnesi_transf_Xs = x.(Xs, x1)
 Morse_transf_Xs = x.(Xs, x2)
-env_Agn_Rs = env.(Agnesis_transf_Xs)
+env_Agn_Rs = env.(Agnesi_transf_Xs)
 env_Mor_Rs = env.(Morse_transf_Xs)
 
 
@@ -56,10 +56,10 @@ let
 
     axs[1][:plot](Xs, ϕ.(Xs), label=L"V_1")
     axs[1].legend(loc="upper right", fontsize = "x-small")
-    axs[2][:plot](Xs, Agnesis_transf_Xs, label="Agnesis")
+    axs[2][:plot](Xs, Agnesi_transf_Xs, label="Agnesi")
     axs[2][:plot](Xs, Morse_transf_Xs, label="Morse", linestyle="dashed")
     axs[2].legend(loc="upper right", fontsize = "x-small")
-    axs[3][:plot](Xs, ϕ.(env_Agn_Rs), label="env with Agnesis")
+    axs[3][:plot](Xs, ϕ.(env_Agn_Rs), label="env with Agnesi")
     axs[3][:plot](Xs, ϕ.(env_Mor_Rs), label="env with Morse", linestyle="dashed")
     axs[3].legend(loc="lower left", fontsize = "x-small")
 
