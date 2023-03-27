@@ -2,7 +2,7 @@ include("../src/HelperFunctions.jl")
 # include("../src/utils.jl")
 
 using .HelperFunctions
-using LaTeXStrings, Interact
+using LaTeXStrings, Interact, Random
 using PyCall
 
 exp_dir = "results/2b1dfitting/" # result saving dir
