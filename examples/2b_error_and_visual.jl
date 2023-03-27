@@ -146,7 +146,7 @@ let fs = [f_1, f_2]
         end
         push!(plots, P)
     end
-    plt = Plots.plot(plots..., layout = (1, 2), size=(1000, 600), margin=5mm)
+    plt = Plots.plot(plots..., layout = (1, 2), size=(800, 400), margin=6mm)
     Plots.savefig(plt, exp_dir*"/RMSE_inc_deg_[" * string(NN[1]) * "," * string(NN[end]) * "]" * "_K_1=[" * string(K_1s[1]) * "," * string(K_1s[end]) * "]" * "_order=$ord" * "_solver=$solver"*string(fs))
     plt
 end

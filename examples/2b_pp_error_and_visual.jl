@@ -2,8 +2,7 @@ include("../src/HelperFunctions.jl")
 include("../src/utils.jl")
 
 using .HelperFunctions
-using LaTeXStrings, Interact
-using PyCall, PyPlot
+using LaTeXStrings, PyCall, PyPlot
 
 #save plot
 exp_dir = "results/2b1dfitting/" # result saving dir
@@ -19,7 +18,7 @@ p = 4   # envelope
 q = 4   # prior smoothness, could be exp
 
 # # pair potential
-ϕ(r) = r^(-12) - 2*r^(-6)
+V_1(r) = r^(-12) - 2*r^(-6)
 
 # morse transform
 # x1(r) = 1 / (1 + r / r_nn)
@@ -39,7 +38,7 @@ f2(x) = abs(x)^3
 # E_avg(X, f) = sum([f.(X[:, i]) for i = 1:size(X)[2]])
 E_avg(X, f) = mean([f.(X[:, i]) for i = 1:size(X)[2]]) * sqrt(size(X)[2])
 
-f = ϕ
+f = V_1
 
 ord = 1 #2b+3b, can access 3b only 
 body_order = :TwoBody # 3b only
@@ -132,7 +131,7 @@ let
     P = Plots.plot(xaxis  = ("Sample Size"),
                             yaxis  = (:log, "RMSE"), 
                             legend = :topright, 
-                            size = (600, 500))
+                            size = (400, 400))
     for K_1 in K_1s
         error = zeros(length(NN))'
         for t = eachindex(NN)
