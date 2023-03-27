@@ -44,7 +44,7 @@ let fs = [f_1, f_2]
         Testing_func(X) = E_avg(X, f)
         plots = []
 
-        fig, axs = PyPlot.subplots(length(K_1s),length(NN), sharex=true, sharey = true, figsize=(10, 10))
+        fig, axs = PyPlot.subplots(length(K_1s),length(NN), sharex=true, sharey = true, figsize=(10, 6))
         # push!(plots, histogram(rand(Uniform(domain_lower, domain_upper), 500), bins = 20, title="Uniform Dist"))
         for i = eachindex(K_1s)
             K_1 = K_1s[i]
