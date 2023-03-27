@@ -129,7 +129,7 @@ end
 
 let
     Testing_func(X) = E_avg(X, f)
-    P = Plots.plot(xaxis  = (:log, "Sample Size"),
+    P = Plots.plot(xaxis  = ("Sample Size"),
                             yaxis  = (:log, "RMSE"), 
                             legend = :topright, 
                             size = (600, 500))
