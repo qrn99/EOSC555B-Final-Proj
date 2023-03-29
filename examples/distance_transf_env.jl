@@ -59,8 +59,8 @@ let
     axs[2][:plot](Xs, Agnesi_transf_Xs, label="Agnesi")
     axs[2][:plot](Xs, Morse_transf_Xs, label="Morse", linestyle="dashed")
     axs[2].legend(loc="upper right", fontsize = "x-small")
-    axs[3][:plot](Xs, ϕ.(env_Agn_Rs), label="env with Agnesi")
-    axs[3][:plot](Xs, ϕ.(env_Mor_Rs), label="env with Morse", linestyle="dashed")
+    axs[3][:plot](Xs, ϕ.(env_Agn_Rs), label="envelope with Agnesi")
+    axs[3][:plot](Xs, ϕ.(env_Mor_Rs), label="envelope with Morse", linestyle="dashed")
     axs[3].legend(loc="lower left", fontsize = "x-small")
 
     fig.savefig(exp_dir*"distance_transf_env", bbox_inches="tight")
